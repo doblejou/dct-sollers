@@ -1,0 +1,115 @@
+DCT WP Hero - WordPress.org review notes
+======================================
+
+This document describes intentional implementation choices, not an approval by
+the WordPress Plugin Review Team. PHPCS exceptions are limited to individual
+reviewed lines and specific rules. No whole-file or whole-project checks are
+disabled. The normal Plugin Check command must still run without ignored codes.
+
+Migration is WP-CLI only
+-----------------------
+modules/migration/class-module.php loads operational classes and registers
+commands only when WP_CLI is true. There are no HTTP, REST or AJAX migration
+handlers. Imports are explicitly requested by the operator, warn about replacing
+files/users/tables, require --mode, and require confirmation or --yes.
+
+Only import trusted packages. They contain executable site code and database
+schemas. Format validation and SHA-256 checks do not authenticate the sender or
+turn an arbitrary package into untrusted input that is safe to execute.
+
+The early import bootstrap is an intentional Plugin Check false positive
+-----------------------------------------------------------------------
+modules/migration/import-bootstrap.php is loaded with wp --require BEFORE
+WordPress. It requires WP_CLI to be defined and true, rejects an already defined
+ABSPATH, and requires --skip-plugins and --skip-themes. After WordPress loads it
+also checks that this plugin and its migration module are active.
+
+Requiring ABSPATH at the top would break the isolated startup needed to avoid
+shutdown callbacks from plugins that an import replaces. Do not add a redundant
+or misleading ABSPATH check just to satisfy the scanner. HTTP direct access exits
+before any operations. The other helper scripts require both ABSPATH and WP_CLI.
+Plugin Check 2.1.0 does not recognize this pre-WordPress guard.
+
+SQL execution and unbuffered results
+-----------------------------------
+Database::query() is an internal executor, not a sanitization function. Callers
+must supply static SQL, wpdb::prepare() results, or validated schema/identifier
+fragments. identifier() only accepts 1-64 ASCII letters, digits, underscores or
+dollar signs and adds backticks. Runtime integer settings are cast before use.
+Restored row values are NULL or UNHEX() of bin2hex(), never raw quoted strings.
+Foreign key clauses are extracted from the canonical supported grammar and
+rebuilt with validated identifiers and actions. Packages are operator-trusted;
+schema checks enforce the supported format, not a general SQL sandbox.
+
+The single wpdb::query($sql) boundary is annotated for the two rules that cannot
+trace these protections through callers. Do not add a raw user value there or
+pass an entire statement to esc_sql(). SQL contract/integration tests cover
+invalid identifiers, hostile-looking binary data and invalid package structures.
+
+The mysqli functions use wpdb's EXISTING connection. MYSQLI_USE_RESULT avoids
+buffering an entire table and preserves the transaction snapshot. Its result
+must be consumed and freed before another query. mysqli_warning_count() reads
+that connection's warning state immediately after inserts/foreign-key creation;
+nonzero warnings stop publication instead of silently accepting truncation.
+No independent connection is opened and no credentials are exposed in errors.
+
+Native filesystem operations
+----------------------------
+wp_is_writable() is used for WordPress-compatible permission checks. Native
+operations remain only where the migration contract needs local guarantees:
+
+* fopen(x/xb), fwrite and fclose: exclusive creation and bounded streaming for
+  NDJSON, ZIP extraction and the standard WordPress .maintenance file. Loading
+  whole dumps through WP_Filesystem::get_contents() is not a streaming substitute.
+* mkdir/chmod: private staging is created with 0700, ZIPs published with 0600,
+  and restored files receive validated safe permissions independently of umask.
+* touch and same-directory rename: preserve dates and replace a complete prepared
+  file atomically, without a remote transport or copy fallback.
+* link: publish a verified ZIP without overwriting an existing target.
+* rmdir: mirror deletes only empty, validated directories, children before parents.
+  It must fail rather than recursively delete unexpected contents.
+* unlink: delete the exact validated mirror target or this operation's temporary
+  or maintenance file, and inspect the native result where required. Applying
+  wp_delete_file() filters could redirect or skip these critical deletions.
+* fwrite(STDERR): cancellation returns through finally cleanup; WP_CLI::confirm()
+  exits directly and would bypass that resource cleanup.
+
+Paths are validated, symbolic links rejected, exclusions preserved, and cleanup
+is scoped to resources created by the operation. These guarantees do not make a
+restore atomic as a whole, prevent concurrent external writers, or add rollback.
+
+CLI exception messages
+----------------------
+Dynamic migration exceptions reach the command's CLI error boundary, not HTML.
+Command::terminal() converts ASCII and UTF-8 C1 control sequences to visible hex
+escapes before error/success output. This prevents rejected paths from injecting
+terminal control sequences without HTML-encoding normal diagnostic text. Each
+exception annotation is specific to this context; HTML templates must still use
+WordPress context-appropriate escaping. The same boundary protects the diagnostic
+subcommand shown after verification. Tests cover controls and unchanged UTF-8.
+
+Remaining warning contexts
+--------------------------
+The following warning families are intentionally left visible rather than
+silenced. These explanations apply to the current callers, not future code:
+
+* DirectQuery/NoCaching: login queries read current block state or execute schema
+  and row-lock transactions; migration context and finalization query persisted
+  values directly, deliberately bypassing possibly stale option caches. There
+  are no core APIs for the private IP table, advisory SQL locks or site dumps.
+* SchemaChange: uninstall.php drops only this plugin's own prefixed IP table,
+  guarded by WP_UNINSTALL_PLUGIN and using wpdb::prepare() with %i.
+* InputNotSanitized/MissingUnslash: REMOTE_ADDR must be a string validated as an
+  IP and normalized with inet_pton/inet_ntop; POST ip is unslashed and validated
+  the same way before the nonce-protected unlock. REQUEST_METHOD is compared
+  strictly to GET/POST, never stored or reflected. DOCUMENT_ROOT is server/CLI
+  configuration resolved with realpath() and used to reject public ZIP paths.
+  Do not replace strict validation with lossy text sanitization that changes
+  rejected input into accepted input.
+* DevelopmentFunctions: operational error_log() messages describe failures,
+  optionally with an integer schema version, not credentials, SQL or visitor IPs.
+* NonPrefixedVariableFound: finalize.php and verify.php are guarded CLI eval-file
+  scripts. Their locals belong to WP-CLI's evaluation scope, not plugin globals
+  exported during a normal WordPress HTTP bootstrap.
+* trademarked_term: Plugin Check lists WP as allowed but emits a warning. The
+  plugin name does not claim official affiliation; no WordPress logo is included.

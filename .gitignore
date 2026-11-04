@@ -1,0 +1,19 @@
+# Reglas y configuración locales de desarrollo.
+/.ai-rules/
+/AGENTS.md
+/APP.md
+
+# Paquetes generados y archivos temporales.
+/release/
+__pycache__/
+*.py[cod]
+*.log
+.DS_Store
+
+# Configuración privada y credenciales.
+.env
+.env.*
+!.env.example
+wp-config.php
+*.pem
+*.key
