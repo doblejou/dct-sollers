@@ -21,6 +21,8 @@ import urllib.request
 # Reutiliza únicamente creación de configuración privada y limpieza ya acotadas.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'migration'))
 from integration import run, cleanup
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'frontend'))
+from frontend_scenarios import scenarios as frontend_scenarios
 
 
 def main():
@@ -68,7 +70,7 @@ def main():
            '--admin_email=test@example.test', '--admin_password=' + password, '--skip-email')
         wp('plugin', 'activate', 'dctwphero')
         wp('theme', 'activate', 'cdn-fixture')
-        for script in ('modules.php', 'cdn/settings.php', 'cdn/admin.php'):
+        for script in ('modules.php', 'cdn/settings.php', 'cdn/admin.php', 'frontend/settings.php'):
             print(wp('eval-file', str(project / 'tests' / script)))
         wp('eval', '$s = DCTWPHero_CDN_Module::defaults(); $s["hostname"] = "cdn.example.test"; '
            '$s["exclusions"] = "/private/"; update_option("dctwphero_cdn_settings", $s);')
@@ -156,6 +158,7 @@ def main():
             assert wp('eval', 'echo DCTWPHero_CDN_Module::settings()["hostname"];') == 'saved.example.test'
             # Regresión general sobre la misma instalación desechable.
             print(run(['python3', str(project / 'tests/login/integration.py'), '--wp-path', str(root), '--url', url]))
+            frontend_scenarios(wp, request, project, theme, admin, subscriber, post, url)
         print('OK: CDN HTML/REST, fuentes, exclusiones, contextos omitidos, permisos, nonce, persistencia y desactivación.')
     finally:
         if server is not None:

@@ -29,6 +29,28 @@ shutdown callbacks from plugins that an import replaces. Do not add a redundant
 or misleading ABSPATH check just to satisfy the scanner. HTTP direct access exits
 before any operations. The other helper scripts require both ABSPATH and WP_CLI.
 Plugin Check 2.1.0 does not recognize this pre-WordPress guard.
+Its Direct_File_Access_Check only recognizes ABSPATH/WPINC as protected
+constants. Do not exclude this PHP file from checks or add fake protection to
+hide that limitation; retain the visible finding for contextual review.
+
+Frontend resource hints and template variables
+---------------------------------------------
+The two s.w.org comparisons in modules/frontend/class-module.php remove the
+WordPress emoji CDN DNS hint, including a saved entry that would reintroduce it.
+They do not download, embed or offload content. Only those two comparison lines
+ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent.
+
+The frontend REQUEST_METHOD gate compares the original value strictly to GET.
+It is neither stored nor reflected. Unslashing or lossy text sanitization could
+turn a rejected value into an accepted method, so only this comparison line
+ignores MissingUnslash and InputNotSanitized. Other validation checks remain on.
+Template loop variables are prefixed instead of ignoring the naming rule.
+
+Repository-only files
+---------------------
+.gitignore is excluded only when checking the source working tree, alongside
+development rules and tests. It is not included in installable ZIPs. No PHP
+distribution file or check code is excluded from the normal check command.
 
 SQL execution and unbuffered results
 -----------------------------------
@@ -111,5 +133,6 @@ silenced. These explanations apply to the current callers, not future code:
 * NonPrefixedVariableFound: finalize.php and verify.php are guarded CLI eval-file
   scripts. Their locals belong to WP-CLI's evaluation scope, not plugin globals
   exported during a normal WordPress HTTP bootstrap.
-* trademarked_term: Plugin Check lists WP as allowed but emits a warning. The
+* trademarked_term: Plugin Check's Trademarks_Check::TRADEMARK_SLUGS explicitly
+  comments that WP is allowed but still emits a warning. The
   plugin name does not claim official affiliation; no WordPress logo is included.

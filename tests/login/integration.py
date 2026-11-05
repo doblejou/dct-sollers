@@ -176,6 +176,7 @@ def main():
             '_wp_http_referer': modules_path, 'dctwphero_modules[login]': '0',
             'dctwphero_modules[migration]': '1',
             'dctwphero_modules[cdn]': '0',
+            'dctwphero_modules[frontend]': '0',
         }
         check(request('/wp-admin/options.php', modules_post, admin_cookie)[0] == 403,
               'Rechaza cambio de módulos sin nonce válido')

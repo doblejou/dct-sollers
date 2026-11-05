@@ -110,6 +110,8 @@ Comandos desde la raíz, **solo en pruebas**: las integraciones modifican datos.
 - Esquema: `wp --path=/var/www/wpdev4.local eval-file tests/login/migrations.php`.
   Usa tabla independiente y restaura la opción de versión; sin tráfico concurrente.
 - Registro general: `wp --path=/var/www/wpdev4.local eval-file tests/modules.php`.
+  El formulario HTTP de estados incluye todos los módulos actuales, también
+  `frontend`, aunque la prueba solo altere la protección de login.
 - La suite desechable `python3 -B tests/migration/integration.py --wp-path /var/www/wpdev4.local --http-host wpdev4.local`
   ejecuta también pruebas de ajustes y almacenamiento de login. Véase
   `../../tests/migration/README.md` para cobertura y límites.

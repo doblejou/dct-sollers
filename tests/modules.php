@@ -11,6 +11,7 @@ try
     $check(DCTWPHero::module_enabled('login'), 'Instalaciones sin opción mantienen la protección activa');
     $check(DCTWPHero::module_enabled('migration'), 'Migración activa por defecto');
     $check(!DCTWPHero::module_enabled('cdn'), 'CDN desactivado por defecto');
+    $check(!DCTWPHero::module_enabled('frontend'), 'Frontend desactivado por defecto');
     $check(!DCTWPHero::module_enabled('unknown'), 'Módulos desconocidos no se activan');
     $legacy = array();
     $legacy['login'] = 0;
@@ -18,10 +19,12 @@ try
     $check(DCTWPHero::module_enabled('migration'), 'Actualización con módulos anteriores activa migración por defecto');
     $check(!DCTWPHero::module_enabled('login'), 'Actualización conserva el estado anterior del login');
     $check(!DCTWPHero::module_enabled('cdn'), 'Actualización no activa CDN automáticamente');
+    $check(!DCTWPHero::module_enabled('frontend'), 'Actualización no activa Frontend automáticamente');
     $disabled = array();
     $disabled['login'] = '0';
     $disabled['migration'] = '1';
     $disabled['cdn'] = '0';
+    $disabled['frontend'] = '0';
     $validated = DCTWPHero_Admin::sanitize_modules($disabled);
     $check($validated['login'] === 0, 'Valida el estado desactivado');
     update_option('dctwphero_modules', $validated);
@@ -52,9 +55,11 @@ try
     $enabled['login'] = '1';
     $enabled['migration'] = '1';
     $enabled['cdn'] = '1';
+    $enabled['frontend'] = '1';
     $result = DCTWPHero_Admin::sanitize_modules($enabled);
     $check($result['login'] === 1, 'Valida la reactivación');
     $check($result['cdn'] === 1, 'Valida activación explícita del CDN');
+    $check($result['frontend'] === 1, 'Valida activación explícita de Frontend');
     $check(DCTWPHero_Admin::sanitize_modules($result) === $result, 'Validación reejecutable');
 
     foreach (array(0, 1, '0', '1') as $login)
@@ -67,10 +72,12 @@ try
                 $input['login'] = $login;
                 $input['migration'] = $migration;
                 $input['cdn'] = $cdn;
+                $input['frontend'] = '0';
                 $expected = array();
                 $expected['login'] = (int) $login;
                 $expected['migration'] = (int) $migration;
                 $expected['cdn'] = (int) $cdn;
+                $expected['frontend'] = 0;
                 $check(DCTWPHero_Admin::sanitize_modules($input) === $expected, 'Combinación válida de estados');
             }
         }
@@ -81,6 +88,9 @@ try
         $input = $result;
         $input['migration'] = $value;
         $check(DCTWPHero_Admin::sanitize_modules($input) === $validated, 'Rechaza tipos de estado inválidos');
+        $input = $result;
+        $input['frontend'] = $value;
+        $check(DCTWPHero_Admin::sanitize_modules($input) === $validated, 'Frontend rechaza tipos inválidos');
     }
 
     $input = $result;

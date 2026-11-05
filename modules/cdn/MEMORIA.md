@@ -104,6 +104,10 @@ CDN/origen; el aviso no implica configurar o verificar esas cabeceras.
   `dct-migration-test-*` para sus validaciones de seguridad. Solo lee núcleo y
   credenciales del sitio de referencia; elimina exclusivamente tablas propias y
   su temporal. Una terminación forzada puede impedir la limpieza.
+- El mismo runner ejecuta `tests/frontend/settings.php` y, tras la regresión de
+  login, `tests/frontend/frontend_scenarios.py` con un tema separado que llama a
+  `wp_head()`. Comprueba que precargas e imagen real reciben las mismas URL CDN,
+  sin introducir dependencias entre módulos de producción.
 
 No sustituye pruebas con un proveedor real, CORS en navegador ni cachés/constructores
 concretos. Los comandos documentados no implican una ejecución en cada tarea.

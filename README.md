@@ -5,6 +5,7 @@ Sus funcionalidades se organizan en módulos independientes; el primero es la
 protección de login por IP.
 Incluye un módulo de migración exclusivamente WP-CLI, activo por defecto.
 Incluye un módulo CDN genérico, desactivado por defecto, sin integración con proveedores.
+Incluye Frontend, desactivado por defecto, con limpieza y optimización de carga explícitas.
 
 ## Instalación
 
@@ -77,12 +78,63 @@ modules/
     templates/        Ejemplos de uso de migración
   cdn/                Coordinación, reescritura y administración del CDN
     templates/        Ajustes y aviso CORS
+  frontend/           Limpieza, hints y precargas mediante API nativas
+    templates/        Ajustes y advertencias
 templates/            Pantalla general y activación de módulos
 tests/
   login/              Pruebas específicas de login
   migration/          Pruebas específicas de migración
   cdn/                Motor, ajustes, diagnóstico e integración HTTP desechable
+  frontend/           Validación y escenarios HTTP sobre el entorno desechable de CDN
 release/              ZIP instalables versionados
+```
+
+## Frontend
+
+En **Ajustes → DCT WP Hero → Frontend**, configurar y activar desde **Módulos**.
+Desactivado por defecto, también al actualizar. Todas las casillas empiezan
+desmarcadas y todos los campos vacíos. Los ajustes permanecen al desactivar.
+
+- **Limpieza:** recursos de compatibilidad de emojis (no los emojis nativos),
+  enlace RSD (no desactiva XML-RPC), shortlinks HTML/cabecera HTTP y Dashicons
+  para visitantes no autenticados. No modifica enlaces permanentes ni datos.
+  Si el tema usa Dashicons pueden faltar iconos; otros estilos que dependan de
+  esa hoja pueden volver a cargarla. No se desregistran esas dependencias.
+- **Preconnect:** hasta 10 orígenes HTTP(S), uno por línea, sin ruta ni parámetros;
+  ejemplo `https://cdn.ejemplo.com`. Conexiones anónimas, adecuadas para fuentes;
+  no necesariamente reutilizables para peticiones con credenciales.
+- **DNS prefetch:** hasta 10 dominios sin protocolo, puerto ni ruta, uno por línea.
+  Usar ASCII/punycode. No repetir dominios ya anticipados por preconnect.
+- **Fuentes:** hasta 5 URL absolutas HTTP(S) de `.woff2`, una por línea; precarga
+  `as=font`, `type=font/woff2` y `crossorigin=anonymous`. Necesitan CORS cuando
+  proceda. Usar únicamente fuentes importantes del primer contenido visible.
+- **Imagen principal:** una URL absoluta HTTP(S), con extensión avif, gif, jpg,
+  jpeg, png, svg o webp. Solo se precarga en la portada no paginada, no en una
+  página de entradas separada. No detecta variantes responsive ni el elemento LCP.
+
+Recursos sin credenciales ni fragmentos; se conservan parámetros de recursos.
+Campos limitados a 16384 bytes, listas normalizadas sin duplicados. Formularios
+incompletos o inválidos conservan todos los ajustes anteriores.
+
+Solo actúa en GET del frontend; omite administración, login, REST, AJAX, cron,
+CLI, XML-RPC, feeds, previews, personalizador, embeds, robots, trackbacks y 404.
+No toca correos ni editor, no añade CSS/JS propios ni modifica `.htaccess`.
+Usa `wp_resource_hints` y `wp_preload_resources`, sin servicios ni descargas.
+Los hints pueden contactar con terceros desde el navegador antes de usar un recurso:
+revisar privacidad y consentimiento. No configura destinos automáticamente.
+
+Usar las mismas URL finales que el tema/CDN, incluidos parámetros; la reescritura
+CDN del HTML también procesa precargas elegibles sin acoplar ambos módulos.
+No se garantiza coincidencia con URL transformadas por otros plugins o CSS externo.
+Verificar descargas duplicadas en el navegador. Precargar demasiado puede empeorar
+la carga. Invalidar cachés de página tras cambiar opciones o estado. Si DietPress
+está activo se muestra un aviso, sin modificarlo ni importar su configuración.
+
+Memoria: `modules/frontend/MEMORIA.md`. Validación, permisos, nonce, HTTP y
+coexistencia con CDN se prueban en el entorno desechable compartido:
+
+```sh
+python3 -B tests/cdn/integration.py --wp-path /var/www/wpdev4.local
 ```
 
 ## CDN
@@ -326,10 +378,17 @@ Antes del envío, ejecutar Plugin Check sobre el paquete de distribución. Para
 comprobar el código fuente desde este proyecto sin desplegarlo en el sitio:
 
 ```sh
-wp --path=/var/www/wpdev4.local plugin check "$PWD" --exclude-directories=tests,release,.ai-rules --exclude-files=AGENTS.md,APP.md,MEMORIA.md --format=json
+wp --path=/var/www/wpdev4.local plugin check "$PWD" --exclude-directories=tests,release,.ai-rules --exclude-files=.gitignore,AGENTS.md,APP.md,MEMORIA.md --format=json
 ```
 
 Plugin Check no sustituye la revisión de seguridad ni las pruebas funcionales.
+`.gitignore` es configuración del repositorio, no forma parte de la distribución;
+por eso se excluye al comprobar el árbol fuente. No excluir archivos PHP del
+paquete ni códigos de error para obtener un resultado limpio. Las excepciones
+PHPCS de Frontend son solo de línea: el dominio de emojis se compara para quitar
+su DNS prefetch, no para alojar contenido, y REQUEST_METHOD se valida por igualdad
+estricta sin modificar la entrada. Las variables de iteración de su plantilla
+utilizan prefijo propio.
 El bootstrap CLI de migración se carga antes de definir `ABSPATH`: su guardia
 `WP_CLI` es intencionada. No añadir una exigencia de `ABSPATH` a ese archivo.
 Los avisos sobre operaciones nativas de archivos, SQL dinámico y excepciones CLI

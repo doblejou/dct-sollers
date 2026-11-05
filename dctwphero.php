@@ -3,7 +3,7 @@
  * Plugin Name: DCT WP Hero
  * Description: Herramientas modulares para WordPress con protección de login configurable.
  * Author: Jose Gonzalez - Daycom Technologies
- * Version: 0.2.16
+ * Version: 0.2.17
  * Requires at least: 7.0
  * Requires PHP: 8.4
  * License: GPL-2.0-or-later
@@ -22,6 +22,9 @@ require_once __DIR__ . '/modules/migration/class-admin.php';
 require_once __DIR__ . '/modules/cdn/class-rewriter.php';
 require_once __DIR__ . '/modules/cdn/class-module.php';
 require_once __DIR__ . '/modules/cdn/class-admin.php';
+require_once __DIR__ . '/modules/frontend/class-settings.php';
+require_once __DIR__ . '/modules/frontend/class-module.php';
+require_once __DIR__ . '/modules/frontend/class-admin.php';
 
 final class DCTWPHero
 {
@@ -58,6 +61,14 @@ final class DCTWPHero
         $cdn['admin_register'] = DCTWPHero_CDN_Admin::register(...);
         $cdn['render'] = DCTWPHero_CDN_Admin::render(...);
         $modules['cdn'] = $cdn;
+        $frontend = array();
+        $frontend['label'] = __('Frontend', 'dctwphero');
+        $frontend['description'] = __('Limpia recursos prescindibles y anticipa conexiones y recursos importantes del frontend.', 'dctwphero');
+        $frontend['default'] = false;
+        $frontend['register'] = DCTWPHero_Frontend_Module::register(...);
+        $frontend['admin_register'] = DCTWPHero_Frontend_Admin::register(...);
+        $frontend['render'] = DCTWPHero_Frontend_Admin::render(...);
+        $modules['frontend'] = $frontend;
 
         return $modules;
     }

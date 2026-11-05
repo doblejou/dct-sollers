@@ -4,7 +4,7 @@ Tags: security, login, migration, cdn
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.4
-Stable tag: 0.2.16
+Stable tag: 0.2.17
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,7 @@ DCT WP Hero provides independent modules configured under Settings → DCT WP He
 * Login protection: limits failed attempts per IP and temporarily blocks all access to wp-login.php. Enabled by default.
 * CLI migration: exports and imports sites using its own ZIP format, exclusively through WP-CLI. Enabled by default.
 * CDN: rewrites local public resource URLs to an administrator-configured hostname. Disabled by default.
+* Frontend: optional emoji, RSD, shortlink and visitor Dashicons cleanup, resource hints, WOFF2 preloads and one front-page image preload. Disabled by default; all settings initially off or empty.
 
 Disabling a module preserves its settings and data. The plugin requires a single-site installation; multisite is not supported.
 
@@ -51,6 +52,12 @@ When this module is enabled, visitors request rewritten resources from the selec
 
 Saving settings makes no external requests. The Check CDN button explicitly sends a HEAD request to the saved hostname at wp-includes/images/blank.gif, with the site origin as Referer and without following redirects. HTTP 200 does not certify all resources or their CORS headers. Fonts require appropriate CORS configuration at the CDN/origin. Invalidate page caches after changing module settings or status. Do not use this module simultaneously with CDN Enabler.
 
+= Frontend optimization and external connections =
+
+Frontend uses native WordPress resource-hint and preload APIs. Configure up to 10 HTTP(S) preconnect origins, 10 DNS-prefetch hostnames, 5 absolute WOFF2 font URLs and one absolute image URL for the non-paginated front page. Fonts use anonymous CORS. Do not preload unnecessary resources: this can make performance worse. Visitor Dashicons cleanup may affect theme icons; dependency styles can still require Dashicons.
+
+No resources are downloaded by the server. Configured hints and preloads may cause visitors' browsers to connect to third parties before those resources are used. Use trusted destinations consistent with your privacy and consent policy. No third-party destinations are configured automatically. Match actual theme/CDN resource URLs, including query parameters, and invalidate page caches after changes. CDN HTML rewriting also applies to eligible preload URLs. The module does not generate critical CSS, defer scripts globally, or remove other plugins' assets automatically.
+
 == Installation ==
 
 1. Upload the dctwphero folder to wp-content/plugins/ or install the ZIP through Plugins → Add Plugin → Upload Plugin.
@@ -77,6 +84,12 @@ No. Protection is IP-based and limited to wp-login.php. It does not replace serv
 No. The migration tab only displays instructions; exporting and importing require WP-CLI.
 
 == Changelog ==
+
+= 0.2.17 =
+
+* Added the optional Frontend module with emoji, RSD, shortlink and visitor Dashicons cleanup.
+* Added configurable preconnect, DNS prefetch, WOFF2 font preloads and a front-page image preload using native WordPress APIs.
+* Added frontend settings validation and HTTP integration tests, including CDN rewriting, permissions and persistence.
 
 = 0.2.16 =
 
