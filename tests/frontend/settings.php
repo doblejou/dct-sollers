@@ -11,6 +11,52 @@ try
     delete_option('dctwphero_frontend_settings');
     $defaults = DCTWPHero_Frontend_Settings::defaults();
     $check(DCTWPHero_Frontend_Settings::get() === $defaults, 'Inicialmente no hay optimizaciones');
+    $new_flags = array
+    (
+        'rest_links',
+        'oembed_links',
+        'generator',
+        'feed_links',
+        'comments_feed_links',
+
+    );
+
+    foreach ($new_flags as $key)
+    {
+        $check($defaults[$key] === 0, 'La nueva limpieza no se activa automáticamente');
+
+        foreach (array(0, 1, '0', '1') as $value)
+        {
+            $input = $defaults;
+            $input[$key] = $value;
+            $check(DCTWPHero_Frontend_Settings::validate($input)[$key] === (int) $value, 'Acepta estados estrictos de la nueva limpieza');
+        }
+
+        foreach (array(true, false, 1.0, -1, 2, null, array()) as $value)
+        {
+            $input = $defaults;
+            $input[$key] = $value;
+            $check(DCTWPHero_Frontend_Settings::validate($input) === null, 'Rechaza estados inválidos de la nueva limpieza');
+        }
+    }
+
+    $legacy = $defaults;
+    $legacy['rsd'] = 1;
+
+    foreach ($new_flags as $key)
+    {
+        unset($legacy[$key]);
+    }
+
+    update_option('dctwphero_frontend_settings', $legacy);
+    $upgraded = DCTWPHero_Frontend_Settings::get();
+    $check($upgraded['rsd'] === 1, 'Actualización conserva ajustes anteriores');
+
+    foreach ($new_flags as $key)
+    {
+        $check($upgraded[$key] === 0, 'Actualización completa nuevas opciones desactivadas');
+    }
+
     $valid = $defaults;
     $valid['emojis'] = '1';
     $valid['preconnect'] = " https://CDN.example.test/\r\nhttps://cdn.example.test\n";
@@ -91,7 +137,9 @@ try
     $input = $defaults;
     $input['unknown'] = '';
     $check(DCTWPHero_Frontend_Settings::validate($input) === null, 'Rechaza claves desconocidas');
-    update_option('dctwphero_frontend_settings', array('rsd' => 1));
+    $partial = array();
+    $partial['rsd'] = 1;
+    update_option('dctwphero_frontend_settings', $partial);
     $check(DCTWPHero_Frontend_Settings::get()['rsd'] === 1, 'Completa ajustes parciales');
     update_option('dctwphero_frontend_settings', 'invalid');
     $check(DCTWPHero_Frontend_Settings::get() === $defaults, 'Corrupción recupera valores seguros');

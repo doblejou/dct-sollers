@@ -31,6 +31,7 @@
     </form>
     <h2><?php esc_html_e('IP bloqueadas', 'dctwphero'); ?> (<?php echo esc_html($count); ?>)</h2>
     <p><?php esc_html_e('Solo se muestran bloqueos activos. Desbloquear también reinicia los fallos de esa IP.', 'dctwphero'); ?></p>
+    <div class="dctwphero-table-scroll" role="region" aria-label="<?php esc_attr_e('Listado de IP bloqueadas', 'dctwphero'); ?>" tabindex="0">
     <table class="widefat striped">
         <caption class="screen-reader-text"><?php esc_html_e('Direcciones IP con bloqueo activo', 'dctwphero'); ?></caption>
         <thead><tr>
@@ -49,7 +50,7 @@
                     <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                         <input type="hidden" name="action" value="dctwphero_unlock">
                         <input type="hidden" name="ip" value="<?php echo esc_attr($dctwphero_block->ip); ?>">
-                        <?php wp_nonce_field('dctwphero_unlock_' . $dctwphero_block->ip); ?>
+                        <input type="hidden" name="_wpnonce" value="<?php echo esc_attr(wp_create_nonce('dctwphero_unlock_' . $dctwphero_block->ip)); ?>">
                         <button type="submit" class="button" aria-label="<?php
                             /* translators: %s: blocked IP address. */
                             echo esc_attr(sprintf(__('Desbloquear %s', 'dctwphero'), $dctwphero_block->ip));
@@ -63,6 +64,7 @@
         <?php endif; ?>
         </tbody>
     </table>
+    </div>
     <?php if ($pages > 1): ?>
         <nav aria-label="<?php esc_attr_e('Páginas de IP bloqueadas', 'dctwphero'); ?>">
 <?php

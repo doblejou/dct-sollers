@@ -9,8 +9,8 @@ $errors = $GLOBALS['wp_settings_errors'] ?? array();
 try
 {
     delete_option('dctwphero_cdn_settings');
-    $defaults = DCTWPHero_CDN_Module::defaults();
-    $check(DCTWPHero_CDN_Module::settings() === $defaults, 'Valores iniciales');
+    $defaults = DCTWPHero_CDN_Settings::defaults();
+    $check(DCTWPHero_CDN_Settings::get() === $defaults, 'Valores iniciales');
     $check(str_contains($defaults['extensions'], ".woff\n.woff2"), 'Fuentes incluidas por defecto');
     $previous = $defaults;
     $previous['hostname'] = 'cdn.example.test';
@@ -20,7 +20,7 @@ try
     {
         $input = $defaults;
         $input['hostname'] = $hostname;
-        $check(DCTWPHero_CDN_Module::validate_settings($input)['hostname'] === strtolower(trim($hostname)), 'Dominio normalizado');
+        $check(DCTWPHero_CDN_Settings::validate($input)['hostname'] === strtolower(trim($hostname)), 'Dominio normalizado');
     }
 
     foreach (array('https://cdn.example.test', '//cdn.example.test', 'cdn.example.test/path', 'cdn.example.test:8080', 'user@cdn.example.test', '127.0.0.1', '[::1]', 'localhost', '-cdn.example.test', "cdn.example.test\nother", array(), true) as $hostname)
@@ -66,9 +66,9 @@ try
     $partial = array();
     $partial['hostname'] = 'partial.example.test';
     update_option('dctwphero_cdn_settings', $partial);
-    $check(DCTWPHero_CDN_Module::settings()['hostname'] === 'partial.example.test', 'Completa opción parcial');
+    $check(DCTWPHero_CDN_Settings::get()['hostname'] === 'partial.example.test', 'Completa opción parcial');
     update_option('dctwphero_cdn_settings', 'invalid');
-    $check(DCTWPHero_CDN_Module::settings() === $defaults, 'Lectura inválida usa valores seguros');
+    $check(DCTWPHero_CDN_Settings::get() === $defaults, 'Lectura inválida usa valores seguros');
     DCTWPHero_Checks::report();
 }
 finally

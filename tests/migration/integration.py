@@ -10,6 +10,7 @@ import secrets
 import shutil
 import socket
 import subprocess
+import sys
 import tempfile
 import time
 import urllib.request
@@ -20,13 +21,8 @@ from elementor import cache_scenarios
 from mirror import mirror_scenarios
 from foreign_keys import create as create_foreign_keys, verify as verify_foreign_keys, failures as foreign_key_failures
 from operation_guard import scenarios as operation_guard_scenarios
-
-
-def run(arguments, expected=0, stdin=None):
-    result = subprocess.run(arguments, input=stdin, text=True, capture_output=True)
-    if result.returncode != expected:
-        raise RuntimeError(f"Fallo ({result.returncode}): {' '.join(arguments[:4])}\n{result.stdout}\n{result.stderr}")
-    return result.stdout + result.stderr
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'support'))
+from environment import run, cleanup
 
 
 def main():
@@ -48,7 +44,7 @@ def main():
     for helper in ('import-bootstrap.php', 'finalize.php', 'verify.php', 'flush-cache.php'):
         assert run(['php', str(project / 'modules/migration' / helper)]) == '', 'Acceso directo sin WordPress ni WP_CLI no ejecuta operaciones'
     temporary = '/tmp/opencode' if os.access('/tmp/opencode', os.W_OK) else tempfile.gettempdir()
-    fixture = Path(tempfile.mkdtemp(prefix='dct-migration-test-', dir=temporary))
+    fixture = Path(tempfile.mkdtemp(prefix='dctwphero-test-', dir=temporary))
     prefix = 'dcttest_' + secrets.token_hex(6) + '_'
     wp_root = fixture / 'wordpress'
     wp_root.mkdir()
@@ -69,13 +65,13 @@ def main():
         shutil.copytree(project, plugin, ignore=shutil.ignore_patterns('.ai-rules', 'release', '__pycache__'))
         (content / 'themes').mkdir()
         (content / 'uploads').mkdir()
-        run(['wp', f'--path={source}', 'eval-file', str(project / 'tests/migration/bootstrap.php'), str(wp_root), prefix])
+        run(['wp', f'--path={source}', 'eval-file', str(project / 'tests/support/bootstrap.php'), str(wp_root), prefix])
         ready.append(wp_root)
         wp('core', 'install', '--url=http://origin.test', '--title=Migration test', '--admin_user=testadmin',
            '--admin_email=test@example.test', '--admin_password=' + secrets.token_hex(20), '--skip-email')
         wp('plugin', 'activate', 'dctwphero')
         for script in ('migration/values.php', 'migration/libraries.php', 'migration/database-contract.php',
-                       'migration/cache.php', 'modules.php', 'login/settings.php', 'login/store.php',
+                       'migration/cache.php', 'modules.php', 'lifecycle.php', 'login/settings.php', 'login/store.php',
                        'login/store-contract.php', 'login/migrations.php'):
             print(wp('eval-file', str(project / 'tests' / script)))
         wp('help', 'dctwphero', 'export', '--format=json')
@@ -216,7 +212,7 @@ def main():
         destination = fixture / 'wordpress-target'
         shutil.copytree(wp_root, destination)
         destination_prefix = 'dcttest_' + secrets.token_hex(6) + '_'
-        run(['wp', f'--path={source}', 'eval-file', str(project / 'tests/migration/bootstrap.php'), str(destination), destination_prefix])
+        run(['wp', f'--path={source}', 'eval-file', str(project / 'tests/support/bootstrap.php'), str(destination), destination_prefix])
         ready.append(destination)
         wp_root = destination
         wp('core', 'install', '--url=https://different.test', '--title=Destination', '--admin_user=destination',
@@ -278,15 +274,6 @@ def main():
             print(f'Entorno privado conservado para diagnóstico: {fixture}')
         else:
             cleanup(project, fixture, ready)
-
-
-def cleanup(project, fixture, installations):
-    for installation in installations:
-        result = subprocess.run(['wp', f'--path={installation}', '--skip-plugins', '--skip-themes',
-                                 'eval-file', str(project / 'tests/migration/cleanup.php')], capture_output=True, text=True)
-        if result.returncode:
-            raise RuntimeError(f'Limpieza incompleta; se conserva {fixture}\n{result.stderr}')
-    shutil.rmtree(fixture)
 
 
 if __name__ == '__main__':

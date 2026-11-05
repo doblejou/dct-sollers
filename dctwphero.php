@@ -3,7 +3,7 @@
  * Plugin Name: DCT WP Hero
  * Description: Herramientas modulares para WordPress con protección de login configurable.
  * Author: Jose Gonzalez - Daycom Technologies
- * Version: 0.2.17
+ * Version: 0.2.20
  * Requires at least: 7.0
  * Requires PHP: 8.4
  * License: GPL-2.0-or-later
@@ -14,12 +14,14 @@
 defined('ABSPATH') || exit;
 
 require_once __DIR__ . '/includes/class-admin.php';
+require_once __DIR__ . '/modules/login/class-settings.php';
 require_once __DIR__ . '/modules/login/class-store.php';
 require_once __DIR__ . '/modules/login/class-admin.php';
 require_once __DIR__ . '/modules/login/class-module.php';
 require_once __DIR__ . '/modules/migration/class-module.php';
 require_once __DIR__ . '/modules/migration/class-admin.php';
 require_once __DIR__ . '/modules/cdn/class-rewriter.php';
+require_once __DIR__ . '/modules/cdn/class-settings.php';
 require_once __DIR__ . '/modules/cdn/class-module.php';
 require_once __DIR__ . '/modules/cdn/class-admin.php';
 require_once __DIR__ . '/modules/frontend/class-settings.php';
@@ -42,6 +44,9 @@ final class DCTWPHero
         $login['description'] = __('Limita los fallos por IP y bloquea temporalmente el acceso a wp-login.php.', 'dctwphero');
         $login['default'] = true;
         $login['register'] = DCTWPHero_Login_Module::register(...);
+        $login['initialize'] = DCTWPHero_Login_Module::initialize(...);
+        $login['activate'] = DCTWPHero_Login_Module::activate(...);
+        $login['deactivate'] = DCTWPHero_Login_Module::deactivate(...);
         $login['admin_register'] = DCTWPHero_Login_Admin::register(...);
         $login['render'] = DCTWPHero_Login_Admin::render(...);
         $modules = array();
@@ -127,7 +132,7 @@ final class DCTWPHero
     ################################################
     public static function boot(): void
     {
-        self::maybe_upgrade();
+        self::initialize_modules();
         $states = self::module_states();
 
         foreach (self::modules() as $id => $module)
@@ -146,52 +151,27 @@ final class DCTWPHero
 
     ################################################
     #
-    #  maybe_upgrade
+    #  initialize_modules
     #
-    #  Actualiza el esquema antes de utilizar el almacenamiento del plugin.
+    #  Inicializa los módulos incluso desactivados antes de registrar su ejecución.
     #
     ################################################
-    public static function maybe_upgrade(): void
+    public static function initialize_modules(): void
     {
-        if (!DCTWPHero_Store::upgrade())
+        foreach (self::modules() as $module)
         {
-            wp_die(
-                esc_html__('No se ha podido actualizar el almacenamiento de DCT WP Hero. Revisa el registro del servidor antes de reintentar.', 'dctwphero'),
-                esc_html__('Actualización pendiente', 'dctwphero'),
-                503
-            );
+            if (isset($module['initialize']))
+            {
+                ($module['initialize'])();
+            }
         }
-    }
-
-    ################################################
-    #
-    #  settings
-    #
-    #  Mantiene el acceso a los ajustes del módulo de login.
-    #
-    ################################################
-    public static function settings(): array
-    {
-        return DCTWPHero_Login_Module::settings();
-    }
-
-    ################################################
-    #
-    #  client_ip
-    #
-    #  Mantiene el acceso a la normalización de IP del módulo de login.
-    #
-    ################################################
-    public static function client_ip(): string
-    {
-        return DCTWPHero_Login_Module::client_ip();
     }
 
     ################################################
     #
     #  activate
     #
-    #  Crea el almacenamiento y programa la limpieza de datos caducados.
+    #  Valida la instalación y ejecuta la activación propia de cada módulo.
     #
     ################################################
     public static function activate(): void
@@ -201,11 +181,12 @@ final class DCTWPHero
             wp_die(esc_html__('DCT WP Hero requiere una instalación individual de WordPress.', 'dctwphero'));
         }
 
-        self::maybe_upgrade();
-
-        if (!wp_next_scheduled('dctwphero_cleanup'))
+        foreach (self::modules() as $module)
         {
-            wp_schedule_event(time() + HOUR_IN_SECONDS, 'hourly', 'dctwphero_cleanup');
+            if (isset($module['activate']))
+            {
+                ($module['activate'])();
+            }
         }
     }
 
@@ -213,18 +194,23 @@ final class DCTWPHero
     #
     #  deactivate
     #
-    #  Retira la tarea periódica conservando ajustes y datos.
+    #  Ejecuta la desactivación propia de cada módulo conservando sus datos.
     #
     ################################################
     public static function deactivate(): void
     {
-        wp_clear_scheduled_hook('dctwphero_cleanup');
+        foreach (self::modules() as $module)
+        {
+            if (isset($module['deactivate']))
+            {
+                ($module['deactivate'])();
+            }
+        }
     }
 }
 
 register_activation_hook(__FILE__, DCTWPHero::activate(...));
 register_deactivation_hook(__FILE__, DCTWPHero::deactivate(...));
 add_action('plugins_loaded', DCTWPHero::boot(...), 0);
-add_action('dctwphero_cleanup', DCTWPHero_Store::cleanup(...));
 add_action('admin_menu', DCTWPHero_Admin::menu(...));
 add_action('admin_init', DCTWPHero_Admin::register_settings(...));

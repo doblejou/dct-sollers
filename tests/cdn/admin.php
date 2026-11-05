@@ -3,7 +3,7 @@
 // Comprueba el diagnóstico con respuestas simuladas: no accede a ningún CDN real.
 require_once dirname(__DIR__) . '/checks.php';
 $check = DCTWPHero_Checks::that(...);
-$settings = DCTWPHero_CDN_Module::defaults();
+$settings = DCTWPHero_CDN_Settings::defaults();
 $check(!DCTWPHero_CDN_Admin::probe($settings)['success'], 'Sin dominio no hay comprobación remota');
 $settings['hostname'] = 'cdn.example.test';
 $calls = 0;

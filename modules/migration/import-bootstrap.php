@@ -23,6 +23,6 @@ WP_CLI::add_hook('after_wp_load', static function (): void
         WP_CLI::error('El plugin DCT WP Hero y su módulo de migración deben estar activos.');
     }
 
-    DCTWPHero::maybe_upgrade();
+    DCTWPHero::initialize_modules();
     DCTWPHero_Migration_Module::register();
 });

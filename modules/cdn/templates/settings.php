@@ -50,7 +50,7 @@
 <p><?php esc_html_e('Comprueba mediante HEAD el archivo wp-includes/images/blank.gif con el dominio guardado. Guarda primero tus cambios. No modifica la configuración ni comprueba todos los recursos o las cabeceras CORS. Se rechazan destinos privados y redirecciones.', 'dctwphero'); ?></p>
 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
     <input type="hidden" name="action" value="dctwphero_cdn_check">
-    <?php wp_nonce_field('dctwphero_cdn_check'); ?>
-    <?php submit_button(__('Comprobar CDN', 'dctwphero'), 'secondary', 'submit', false); ?>
+    <input type="hidden" name="_wpnonce" value="<?php echo esc_attr(wp_create_nonce('dctwphero_cdn_check')); ?>">
+    <?php submit_button(__('Comprobar CDN', 'dctwphero'), 'secondary', 'dctwphero_cdn_check_submit', false); ?>
 </form>
 <p class="description"><?php esc_html_e('Después de cambiar ajustes o activar/desactivar el módulo, limpia las cachés de página que utilices. La reescritura no modifica las URL almacenadas en la base de datos, los archivos ni las referencias internas de CSS o JavaScript externos. El CDN y su caché se administran fuera de este plugin.', 'dctwphero'); ?></p>

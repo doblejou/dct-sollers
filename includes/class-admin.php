@@ -13,7 +13,21 @@ final class DCTWPHero_Admin
     ################################################
     public static function menu(): void
     {
-        add_options_page('DCT WP Hero', 'DCT WP Hero', 'manage_options', 'dctwphero', self::render(...));
+        $hook = add_options_page('DCT WP Hero', 'DCT WP Hero', 'manage_options', 'dctwphero', self::render(...));
+        add_action('admin_print_styles-' . $hook, self::enqueue_styles(...));
+    }
+
+    ################################################
+    #
+    #  enqueue_styles
+    #
+    #  Carga la presentación propia únicamente en la pantalla del plugin.
+    #
+    ################################################
+    public static function enqueue_styles(): void
+    {
+        $file = dirname(__DIR__) . '/assets/admin.css';
+        wp_enqueue_style('dctwphero-admin', plugins_url('assets/admin.css', dirname(__DIR__) . '/dctwphero.php'), array(), (string) filemtime($file));
     }
 
     ################################################

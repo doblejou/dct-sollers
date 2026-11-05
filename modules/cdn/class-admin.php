@@ -41,13 +41,13 @@ final class DCTWPHero_CDN_Admin
     ################################################
     public static function sanitize(mixed $input): array
     {
-        $result = DCTWPHero_CDN_Module::validate_settings($input);
+        $result = DCTWPHero_CDN_Settings::validate($input);
 
         if ($result === null)
         {
             add_settings_error('dctwphero_cdn_settings', 'invalid_cdn', __('Ajustes CDN no válidos. Introduce solo un dominio sin protocolo, puerto ni ruta, extensiones con punto y una entrada por línea. Se conservan los ajustes anteriores.', 'dctwphero'));
 
-            return DCTWPHero_CDN_Module::settings();
+            return DCTWPHero_CDN_Settings::get();
         }
 
         return $result;
@@ -67,7 +67,7 @@ final class DCTWPHero_CDN_Admin
             wp_die(esc_html__('No tienes permisos.', 'dctwphero'), '', 403);
         }
 
-        $settings = DCTWPHero_CDN_Module::settings();
+        $settings = DCTWPHero_CDN_Settings::get();
         $enabled = DCTWPHero::module_enabled('cdn');
         $conflict = is_plugin_active('cdn-enabler/cdn-enabler.php');
         $transient = 'dctwphero_cdn_check_' . get_current_user_id();
@@ -138,7 +138,7 @@ final class DCTWPHero_CDN_Admin
         }
 
         check_admin_referer('dctwphero_cdn_check');
-        $result = self::probe(DCTWPHero_CDN_Module::settings());
+        $result = self::probe(DCTWPHero_CDN_Settings::get());
         set_transient('dctwphero_cdn_check_' . get_current_user_id(), $result, MINUTE_IN_SECONDS);
         wp_safe_redirect(admin_url('options-general.php?page=dctwphero&tab=cdn'));
         exit;

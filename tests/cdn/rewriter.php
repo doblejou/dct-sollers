@@ -3,10 +3,10 @@
 // Ejecutar con wp eval-file para comprobar el parser de URL real de WordPress.
 defined('ABSPATH') || exit;
 require_once dirname(__DIR__) . '/checks.php';
-require_once dirname(__DIR__, 2) . '/modules/cdn/class-module.php';
+require_once dirname(__DIR__, 2) . '/modules/cdn/class-settings.php';
 require_once dirname(__DIR__, 2) . '/modules/cdn/class-rewriter.php';
 $check = DCTWPHero_Checks::that(...);
-$settings = DCTWPHero_CDN_Module::defaults();
+$settings = DCTWPHero_CDN_Settings::defaults();
 $settings['hostname'] = 'cdn.example.test';
 $settings['exclusions'] = "/private/\nSkip\n0-private";
 $engine = new DCTWPHero_CDN_Rewriter($settings, array('https://example.test/sub', 'http://static.example.test:8080/wp'));

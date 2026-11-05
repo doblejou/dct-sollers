@@ -1,6 +1,7 @@
 <?php
 
 // Tema usado únicamente por la integración HTTP desechable.
+add_theme_support('automatic-feed-links');
 add_action('wp_enqueue_scripts', static function (): void
 {
     wp_enqueue_style('dashicons');

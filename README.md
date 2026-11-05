@@ -16,7 +16,10 @@ multisite en esta versión: la activación se rechaza en esas instalaciones.
 
 En **Ajustes → DCT WP Hero** se configuran:
 
-La pantalla utiliza pestañas nativas de WordPress, sin JavaScript ni CSS propios.
+La pantalla utiliza controles nativos de WordPress, navegación por secciones y
+tarjetas con el estado guardado de cada módulo. Su CSS3 propio se carga solo en
+la pantalla del plugin; no utiliza frameworks CSS ni JavaScript propio. Es
+adaptable a móvil y mantiene indicadores de foco para la navegación por teclado.
 La primera, **Módulos**, contiene únicamente la activación de funcionalidades.
 Los módulos con ajustes tienen su pestaña dedicada: **Protección de login** muestra
 sus ajustes y bloqueos, incluso cuando está desactivado. La versión aparece en todas
@@ -55,9 +58,19 @@ que conecte sus hooks, cargarla desde `dctwphero.php` y declararla en
 registro, además de callbacks opcionales `admin_register` para conectar su
 administración (incluso desactivado) y `render` para su pantalla de ajustes. El listado
 de administración y las pestañas se generan a partir de ese registro.
+Los callbacks opcionales `initialize`, `activate` y `deactivate` pertenecen al
+ciclo de vida de cada módulo: inicialización en cada arranque, incluso desactivado,
+y activación/desactivación del plugin completo, respectivamente. Cambiar la casilla
+no ejecuta estos dos últimos callbacks ni elimina datos. La inicialización precede
+al registro de ejecución; el arranque CLI aislado usa la misma inicialización.
 Cada módulo agrupa su lógica, administración, almacenamiento y plantillas en su
 propia carpeta. `modules/login/class-module.php` contiene la protección de login;
-su almacenamiento está en `modules/login/class-store.php`, su administración en
+los ajustes se separan en `class-settings.php`, igual que en CDN y Frontend,
+con `defaults()`, `validate()` y `get()`. El login también posee la actualización
+de su almacenamiento y su cron desde los callbacks del registro. El coordinador
+general ya no expone los antiguos delegados de login `settings()` y `client_ip()`;
+usar `DCTWPHero_Login_Settings::get()` y `DCTWPHero_Login_Module::client_ip()`.
+Su almacenamiento está en `modules/login/class-store.php`, su administración en
 `modules/login/class-admin.php` y su plantilla en `modules/login/templates/settings.php`.
 La administración general permanece en `includes/class-admin.php` y sus plantillas
 en `templates/admin.php` y `templates/modules.php`. Las plantillas se limitan a la
@@ -70,6 +83,7 @@ organizan en `tests/<id>/`; `tests/modules.php` comprueba el registro general.
 ### Estructura de carpetas
 
 ```text
+assets/               CSS3 propio, exclusivo de la pantalla administrativa
 includes/             Infraestructura general y código compartido
 modules/
   login/              Protección de login, administración y almacenamiento
@@ -85,7 +99,8 @@ tests/
   login/              Pruebas específicas de login
   migration/          Pruebas específicas de migración
   cdn/                Motor, ajustes, diagnóstico e integración HTTP desechable
-  frontend/           Validación y escenarios HTTP sobre el entorno desechable de CDN
+  frontend/           Validación y escenarios HTTP con runner desechable propio
+  support/            Configuración, ejecución, servidor y limpieza compartidos
 release/              ZIP instalables versionados
 ```
 
@@ -100,6 +115,19 @@ desmarcadas y todos los campos vacíos. Los ajustes permanecen al desactivar.
   para visitantes no autenticados. No modifica enlaces permanentes ni datos.
   Si el tema usa Dashicons pueden faltar iconos; otros estilos que dependan de
   esa hoja pueden volver a cargarla. No se desregistran esas dependencias.
+- **Descubrimiento REST:** retira referencias a la API en HTML y cabeceras HTTP;
+  no desactiva sus endpoints. Puede dificultar a clientes descubrir la API.
+- **Descubrimiento oEmbed:** retira las etiquetas JSON/XML del HTML. No desactiva
+  endpoints, scripts ni incrustaciones existentes; otras webs pueden dejar de
+  descubrir cómo incrustar tus entradas.
+- **Meta generator:** retira la etiqueta de la cabecera HTML, no el generator
+  de feeds ni todas las referencias a versiones. Es cosmético, no seguridad.
+- **Descubrimiento RSS de contenido:** retira enlaces HTML generales y de
+  categorías, etiquetas, taxonomías, autores, búsquedas y archivos de tipos.
+- **Descubrimiento RSS de comentarios:** opción independiente para el enlace
+  general y el de cada entrada. No desactiva comentarios ni elimina datos.
+  Ambos controles RSS conservan los feeds por URL; lectores y navegadores pueden
+  dejar de descubrir suscripciones automáticamente.
 - **Preconnect:** hasta 10 orígenes HTTP(S), uno por línea, sin ruta ni parámetros;
   ejemplo `https://cdn.ejemplo.com`. Conexiones anónimas, adecuadas para fuentes;
   no necesariamente reutilizables para peticiones con credenciales.
@@ -115,10 +143,15 @@ desmarcadas y todos los campos vacíos. Los ajustes permanecen al desactivar.
 Recursos sin credenciales ni fragmentos; se conservan parámetros de recursos.
 Campos limitados a 16384 bytes, listas normalizadas sin duplicados. Formularios
 incompletos o inválidos conservan todos los ajustes anteriores.
+Las cinco casillas nuevas se completan desactivadas al actualizar configuraciones
+anteriores, conservando las opciones ya guardadas. Todas las limpiezas muestran
+«Qué elimina», «Qué conserva» y «Precaución» junto a la casilla, con ayuda accesible
+y sin JavaScript propio. Retirar etiquetas de descubrimiento aporta un ahorro
+pequeño, no deshabilita los servicios y no debe presentarse como protección.
 
 Solo actúa en GET del frontend; omite administración, login, REST, AJAX, cron,
 CLI, XML-RPC, feeds, previews, personalizador, embeds, robots, trackbacks y 404.
-No toca correos ni editor, no añade CSS/JS propios ni modifica `.htaccess`.
+No toca correos ni editor, no añade CSS/JS al sitio público ni modifica `.htaccess`.
 Usa `wp_resource_hints` y `wp_preload_resources`, sin servicios ni descargas.
 Los hints pueden contactar con terceros desde el navegador antes de usar un recurso:
 revisar privacidad y consentimiento. No configura destinos automáticamente.
@@ -131,10 +164,10 @@ la carga. Invalidar cachés de página tras cambiar opciones o estado. Si DietPr
 está activo se muestra un aviso, sin modificarlo ni importar su configuración.
 
 Memoria: `modules/frontend/MEMORIA.md`. Validación, permisos, nonce, HTTP y
-coexistencia con CDN se prueban en el entorno desechable compartido:
+coexistencia con CDN se prueban desde su propia entrada desechable:
 
 ```sh
-python3 -B tests/cdn/integration.py --wp-path /var/www/wpdev4.local
+python3 -B tests/frontend/integration.py --wp-path /var/www/wpdev4.local
 ```
 
 ## CDN
@@ -191,7 +224,7 @@ python3 -B tests/cdn/integration.py --wp-path /var/www/wpdev4.local
 ```
 
 La integración crea un WordPress desechable con prefijo SQL aleatorio y servidor
-local, ejecuta también ajustes, diagnóstico HTTP simulado y regresión de login,
+local, ejecuta también motor, ajustes, administración general y diagnóstico HTTP simulado,
 y limpia sus recursos al terminar. Solo utiliza núcleo y credenciales del sitio
 indicado; no modifica sus opciones ni sus plugins. Requiere WP-CLI, PHP y un host
 `.local` que resuelva a 127.0.0.1 (`--http-host`, por defecto wpdev4.local).
@@ -302,6 +335,12 @@ o reemplazado. Se omiten los drop-ins de caché durante esa fase; los ajustes y
 comprobaciones posteriores arrancan procesos normales nuevos con el sitio restaurado.
 El trabajador aislado no se hereda a las verificaciones ni a la limpieza de cachés.
 
+Internamente `modules/migration/class-import.php` separa la resolución del destino,
+la preparación del plan y la aplicación de archivos. `class-command.php` conserva
+la interfaz CLI, la confirmación, el mantenimiento y la secuencia de publicación y
+verificación. `class-operation.php` sigue siendo dueño del bloqueo y la limpieza;
+`class-files.php` y `class-database.php` conservan sus reglas únicas de archivos y SQL.
+
 El reinicio transparente usa `pcntl_exec` de PHP CLI. Si no está disponible, se
 detiene antes de modificar el sitio y se muestra el comando equivalente con
 `--skip-plugins --skip-themes --require=.../modules/migration/import-bootstrap.php`.
@@ -363,7 +402,7 @@ límite comercial de tamaño; el manifiesto se limita a 64 MiB para validación 
 ## Actualizaciones y migraciones
 
 Para distribuir el plugin, crear un ZIP con la carpeta `dctwphero/` que contenga
-`dctwphero.php`, `includes/`, `modules/`, `templates/`, `uninstall.php`, `readme.txt`
+`dctwphero.php`, `includes/`, `modules/`, `templates/`, `assets/`, `uninstall.php`, `readme.txt`
 y `review-notes.txt`.
 Excluir pruebas, reglas, releases anteriores y memorias técnicas `MEMORIA.md`. Subirlo desde
 **Plugins → Añadir plugin → Subir plugin**. Para actualizar, subir el nuevo ZIP
@@ -460,15 +499,22 @@ Sintaxis: `find . -name '*.php' -exec php -l {} \;`.
 Las pruebas PHP comparten las aserciones de `tests/checks.php`. Los recuentos
 indican comprobaciones ejecutadas, no un porcentaje de cobertura.
 
-Las pruebas de integración requieren un WordPress local con el plugin activo.
-No deben ejecutarse en producción: modifican temporalmente sus ajustes y módulos y crean
-bloqueos de prueba y usuarios temporales. Restauran los ajustes y las filas
-afectadas, restauran los estados de módulos y eliminan los usuarios al terminar,
-incluso cuando una prueba falla.
-Una interrupción forzada del proceso puede impedir esa restauración.
+`tests/admin-ui.php` comprueba las cinco secciones, los identificadores únicos,
+las tarjetas, la ayuda de limpieza y el carácter informativo de migración.
+Lo ejecuta `tests/cdn/integration.py` en su instalación desechable, junto con
+comprobaciones HTTP que limitan el CSS propio a la pantalla del plugin.
+
+Las entradas siguientes son independientes. Solo leen núcleo y credenciales del
+WordPress local indicado; cada suite crea una instalación desechable con prefijo
+SQL aleatorio propio. No requieren el plugin activo en el sitio de referencia ni
+restauran sobre él. La infraestructura común reside en `tests/support/`, no en
+una suite de módulo. Una interrupción forzada puede impedir su limpieza.
 
 ```sh
-python3 tests/login/integration.py --wp-path /var/www/wpdev4.local --url http://wpdev4.local
+python3 -B tests/login/run.py --wp-path /var/www/wpdev4.local
+python3 -B tests/cdn/integration.py --wp-path /var/www/wpdev4.local
+python3 -B tests/frontend/integration.py --wp-path /var/www/wpdev4.local
+python3 -B tests/migration/integration.py --wp-path /var/www/wpdev4.local --http-host wpdev4.local
 ```
 
 Incluye pruebas HTTP de login, administración, permisos, nonce y desbloqueo,
@@ -477,7 +523,11 @@ para ventana móvil, expiración e IPv6.
 `tests/login/settings.php` comprueba tipos, límites y lectura segura de ajustes;
 `tests/login/store-contract.php` provoca errores SQL en una tabla independiente
 para verificar propagación de fallos, rollback y reintentos, incluido `COMMIT`.
-Ambos se ejecutan desde la suite desechable de migración descrita abajo.
+Se ejecutan desde `tests/login/run.py` y se conservan como regresión de migración.
+`tests/lifecycle.php` verifica inicialización desactivada, cron, activación
+reejecutable y conservación de ajustes/estados en los runners de login y migración.
+`tests/login/integration.py` sigue siendo el escenario HTTP de bajo nivel: recibe
+`--wp-path` y `--url` de una instalación de pruebas ya preparada, no crea una copia.
 
 Validación de estados y compatibilidad con instalaciones anteriores:
 `wp --path=/var/www/wpdev4.local eval-file tests/modules.php`. Modifica y restaura

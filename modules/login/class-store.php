@@ -342,7 +342,7 @@ final class DCTWPHero_Store
     {
         global $wpdb;
 
-        $settings = DCTWPHero::settings();
+        $settings = DCTWPHero_Login_Settings::get();
         $now = time();
         $wpdb->query($wpdb->prepare(
             'DELETE FROM %i WHERE blocked_until <= %d AND updated_at < %d',

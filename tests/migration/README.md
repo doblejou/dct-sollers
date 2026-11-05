@@ -11,7 +11,7 @@ impedirlo. No se conceden privilegios SQL ni se instalan dependencias.
 
 `--keep-on-failure` conserva el entorno para diagnóstico si falla una prueba. La
 ruta mostrada contiene configuración privada: no publicarla y limpiarla después
-con las salvaguardas de `cleanup.php`, nunca mediante comodines amplios.
+con las salvaguardas de `../support/cleanup.php`, nunca mediante comodines amplios.
 
 ## Organización
 
@@ -36,9 +36,13 @@ con las salvaguardas de `cleanup.php`, nunca mediante comodines amplios.
   exportación y antes de publicar tablas; ZIP no publicado o diagnóstico explícito
   de fallo de limpieza posterior, y mantenimiento según la fase de importación.
 - `integration.py`: ciclo completo, aislamiento y regresión HTTP opcional.
-- `bootstrap.php` y `cleanup.php`: configuración y limpieza limitadas a pruebas.
+- `../support/bootstrap.php`, `cleanup.php` y `environment.py`: configuración,
+  ejecución y limpieza compartidas, limitadas a instalaciones `dctwphero-test-*`
+  y prefijos aleatorios `dcttest_<12 hex>_`, fuera de las suites de módulos.
   El entorno activa `WP_CACHE` para ejecutar también el filtro temprano que impide
   cargar `advanced-cache.php` durante la importación aislada.
+- `../lifecycle.php`: ciclo de vida modular, cron, inicialización desactivada y
+  conservación de estados/ajustes. También lo ejecuta la entrada propia de login.
 
 ## Matriz de escenarios
 

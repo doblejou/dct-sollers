@@ -9,10 +9,10 @@ $errors = $GLOBALS['wp_settings_errors'] ?? array();
 try
 {
     delete_option('dctwphero_settings');
-    $defaults = DCTWPHero_Login_Module::settings();
+    $defaults = DCTWPHero_Login_Settings::get();
     $check($defaults['threshold'] === 3 && $defaults['window'] === 1 && $defaults['duration'] === 15, 'Valores iniciales documentados');
 
-    foreach (DCTWPHero_Login_Module::limits() as $key => $maximum)
+    foreach (DCTWPHero_Login_Settings::limits() as $key => $maximum)
     {
         foreach (array(1, '1', $maximum, (string) $maximum, '0002') as $value)
         {
@@ -68,7 +68,7 @@ try
     $previous['window'] = 15;
     $previous['duration'] = 30;
     update_option('dctwphero_settings', $previous);
-    $check(DCTWPHero_Login_Module::settings() === $previous, 'Conserva los ajustes guardados antes del cambio de valores iniciales');
+    $check(DCTWPHero_Login_Settings::get() === $previous, 'Conserva los ajustes guardados antes del cambio de valores iniciales');
     delete_option('dctwphero_settings');
 
     $partial = array();
@@ -76,18 +76,18 @@ try
     update_option('dctwphero_settings', $partial);
     $expected = $defaults;
     $expected['threshold'] = 7;
-    $check(DCTWPHero_Login_Module::settings() === $expected, 'Completa ajustes anteriores y normaliza enteros');
+    $check(DCTWPHero_Login_Settings::get() === $expected, 'Completa ajustes anteriores y normaliza enteros');
 
     foreach (array(false, 'threshold=0', new stdClass()) as $input)
     {
         update_option('dctwphero_settings', $input);
-        $check(DCTWPHero_Login_Module::settings() === $defaults, 'Configuración persistida inválida usa valores seguros');
+        $check(DCTWPHero_Login_Settings::get() === $defaults, 'Configuración persistida inválida usa valores seguros');
     }
 
     $invalid = $defaults;
     $invalid['window'] = 0;
     update_option('dctwphero_settings', $invalid);
-    $check(DCTWPHero_Login_Module::settings() === $defaults, 'Rechaza rangos inválidos también al leer');
+    $check(DCTWPHero_Login_Settings::get() === $defaults, 'Rechaza rangos inválidos también al leer');
     DCTWPHero_Checks::report();
 }
 finally

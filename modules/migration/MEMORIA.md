@@ -20,6 +20,7 @@ Clases con prefijo `DCTWPHero_Migration_`:
 | `class-module.php` | `Module`: carga operativa solo con `WP_CLI`; registra export/import. |
 | `class-admin.php`, `templates/usage.php` | `Admin`: pestaña informativa con ejemplos, incluso desactivado; sin controles de ejecución. |
 | `class-command.php` | `Command`: argumentos, coordinación, confirmación y secuencia de importación/finalización. |
+| `class-import.php` | `Import`: contexto destino, plan validado de importación y aplicación de archivos; sin confirmaciones, mantenimiento ni salida CLI. |
 | `class-operation.php` | `Operation`: propietario de bloqueo, temporales y objeto Database; limpieza centralizada. |
 | `class-process.php` | `Process`: sustitución del proceso y comprobación del aislamiento. |
 | `import-bootstrap.php` | Arranque temprano con `--require`, sin plugins, mu-plugins, temas ni drop-ins de caché antiguos. |
@@ -97,6 +98,10 @@ wp dctwphero import --file=/ruta/privada/sitio.zip --mode=mirror --yes
    rechaza código de plugins/temas antiguos cargado por configuración externa.
 4. Crear contexto destino, obtener bloqueo/temporal, extraer y validar paquete,
    versiones, esquemas existentes, mapa de reemplazos y plan de archivos.
+   `Import::target()` resuelve URLs/uploads y conflictos con constantes;
+   `Import::plan()` valida esquemas, destinos, filas y fronteras de claves externas,
+   y devuelve `map`, `existing`, `files` y `extra_tables`. No cambia archivos ni
+   tablas del sitio; la instancia Database sigue siendo propiedad de Operation.
 5. `Database::prepare(..., true)` recorre/valida las filas y transformaciones sin
    crear tablas del sitio ni codificar valores SQL innecesariamente. La carga real
    prepara la cabecera INSERT una vez por tabla y reutiliza su lista de columnas.
@@ -105,6 +110,9 @@ wp dctwphero import --file=/ruta/privada/sitio.zip --mode=mirror --yes
    `dctm_` con filas transformadas; rechazar errores y avisos de conversión SQL.
 7. Copiar archivos del plan, borrar extras y retirar directorios extra vacíos de
    hijos a padres con `rmdir`. Preservar raíces estructurales y padres de exclusiones.
+   Esta fase pertenece a `Import::restore_files()`; Command conserva los controles
+   de bloqueo antes/después, mantenimiento, publicación y finalización. No mover
+   la finalización al proceso que cargó el sitio antiguo ni omitir el prepare real.
 8. `Database::publish()` publica tablas mediante `RENAME TABLE` y elimina las
    retiradas/extras pertinentes. `extra_tables()` sirve tanto al resumen como al borrado.
 9. `Command::finalize()` lanza procesos nuevos: `finalize.php`, `core update-db`,
@@ -174,6 +182,10 @@ superen el timeout ampliado. No modifica GLOBAL wait_timeout.
   Dry-run no garantiza permisos DDL, espacio SQL remoto ni compatibilidad de plugins.
   No borrar por comodín restos `dctm_`/temporales tras una interrupción forzada.
 
+El bootstrap aislado usa `DCTWPHero::initialize_modules()` antes de registrar el
+migrador: respeta la inicialización modular común sin registrar ejecución de otros
+módulos. La actualización del almacén de login ya no reside en el coordinador.
+
 ## Pruebas y localización de cambios
 
 Rutas y comandos desde la raíz. Referencia detallada:
@@ -207,5 +219,11 @@ La suite también ejecuta regresiones de login. Aserciones comunes en
 `tests/checks.php`; los recuentos no son porcentajes de cobertura. Los contratos
 con dobles SQL no equivalen a integración con permisos reales. No se certifican
 discos llenos, ZIP >4 GiB, SIGKILL ni todas las combinaciones de servidor/plugins.
+
+Infraestructura de instalación/limpieza en `tests/support/bootstrap.php`,
+`cleanup.php` y `environment.py`; no importar otro runner para reutilizarla.
+Los temporales reservados son `dctwphero-test-*` y las tablas `dcttest_<12 hex>_`.
+La regresión incluye `tests/lifecycle.php`; login, CDN y Frontend también tienen
+entradas propias y no necesitan ejecutar migración para preparar su entorno.
 
 Los comandos son referencias, no constancia de pruebas ejecutadas al crear esta memoria.

@@ -129,7 +129,7 @@ final class DCTWPHero_Migration_Command
      */
     public static function import(array $args, array $options): void
     {
-        global $wpdb, $wp_version;
+        global $wp_version;
         $maintenance = false;
         $operation = new DCTWPHero_Migration_Operation();
         $database = $operation->database();
@@ -171,28 +171,7 @@ final class DCTWPHero_Migration_Command
                 DCTWPHero_Migration_Process::isolate($options);
             }
 
-            $target = DCTWPHero_Migration_Package::context();
-            $original_site = $target['site'];
-            $original_home = $target['home'];
-            $target['home'] = DCTWPHero_Migration_Values::url($options['home-url'] ?? $target['home']);
-            $target['site'] = DCTWPHero_Migration_Values::url($options['site-url'] ?? $target['site']);
-            $original_urls = array();
-            $original_urls[$original_site] = $target['site'];
-            $original_urls[$original_home] ??= $target['home'];
-            $target['uploads_url'] = strtr($target['uploads_url'], $original_urls);
-
-            $constants = array();
-            $constants['WP_HOME'] = 'home';
-            $constants['WP_SITEURL'] = 'site';
-
-            foreach ($constants as $constant => $key)
-            {
-                if (defined($constant) && untrailingslashit(constant($constant)) !== $target[$key])
-                {
-                    throw new RuntimeException('La URL solicitada entra en conflicto con ' . $constant . '.');
-                }
-            }
-
+            $target = DCTWPHero_Migration_Import::target($options);
             $directory = $operation->start();
             WP_CLI::log('Validando ZIP, inventario e integridad…');
             $manifest = DCTWPHero_Migration_Package::extract($file, $directory);
@@ -207,31 +186,12 @@ final class DCTWPHero_Migration_Command
                 WP_CLI::warning('El origen usa una versión de PHP posterior. Comprueba la compatibilidad de sus plugins.');
             }
 
-            $map = DCTWPHero_Migration_Values::map($manifest['context'], $target);
-            $existing = DCTWPHero_Migration_Database::tables();
-
-            foreach ($existing as $table)
-            {
-                DCTWPHero_Migration_Database::schema($table);
-            }
-
-            $excluded = array_unique(array_merge($manifest['excluded_paths'], DCTWPHero_Migration_Files::exclusions()));
-            $files = DCTWPHero_Migration_Files::plan(WP_CONTENT_DIR, $manifest['entries'], $excluded, $options['mode']);
-
-            if (!wp_is_writable(ABSPATH))
-            {
-                throw new RuntimeException('No se puede activar mantenimiento en el destino.');
-            }
-
-            $database->prepare($directory, $manifest, $map, true);
+            $plan = DCTWPHero_Migration_Import::plan($directory, $manifest, $target, $options['mode'], $database);
             WP_CLI::log('Tablas incluidas: ' . count($manifest['tables']));
-            WP_CLI::log('Archivos a sustituir/crear: ' . count($files['write']));
-            WP_CLI::log('Archivos extra a eliminar: ' . count($files['delete']));
-            WP_CLI::log('Directorios extra a eliminar tras vaciarlos: ' . count($files['directories']));
-            $included_tables = array_map(static fn(string $suffix): string => $wpdb->prefix . $suffix, array_keys($manifest['tables']));
-            $extra_tables = DCTWPHero_Migration_Database::extra_tables($existing, $included_tables, $manifest['excluded_tables'], $options['mode']);
-            DCTWPHero_Migration_Database::foreign_boundary(array_merge($included_tables, $extra_tables));
-            WP_CLI::log('Tablas extra a eliminar: ' . count($extra_tables));
+            WP_CLI::log('Archivos a sustituir/crear: ' . count($plan['files']['write']));
+            WP_CLI::log('Archivos extra a eliminar: ' . count($plan['files']['delete']));
+            WP_CLI::log('Directorios extra a eliminar tras vaciarlos: ' . count($plan['files']['directories']));
+            WP_CLI::log('Tablas extra a eliminar: ' . count($plan['extra_tables']));
             WP_CLI::log('Modo: ' . $options['mode'] . '; home: ' . $target['home'] . '; site: ' . $target['site']);
 
             if (isset($options['dry-run']))
@@ -265,41 +225,13 @@ final class DCTWPHero_Migration_Command
                 }
 
                 WP_CLI::log('Preparando tablas y adaptando URLs y rutas…');
-                $database->prepare($directory, $manifest, $map, false);
+                $database->prepare($directory, $manifest, $plan['map'], false);
                 $operation->assert_locked();
                 WP_CLI::log('Restaurando archivos…');
 
-                foreach ($files['write'] as $path)
-                {
-                    $metadata = $manifest['entries']['content/' . $path];
-                    DCTWPHero_Migration_Files::copy(
-                        $directory . '/content/' . $path,
-                        WP_CONTENT_DIR,
-                        $path,
-                        $metadata['mode'] ?? 0644,
-                        $metadata['mtime'] ?? null
-                    );
-                }
-
-                foreach ($files['delete'] as $path)
-                {
-                    $destination = DCTWPHero_Migration_Files::destination(WP_CONTENT_DIR, $path);
-
-                    // Validated mirror target: detect deletion failure, without wp_delete_file() filters changing the path.
-                    // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
-                    if (!unlink($destination))
-                    {
-                        throw new RuntimeException('No se puede eliminar el archivo extra: ' . $path);
-                    }
-                }
-
-                foreach ($files['directories'] as $path)
-                {
-                    DCTWPHero_Migration_Files::remove_directory(WP_CONTENT_DIR, $path);
-                }
-
+                DCTWPHero_Migration_Import::restore_files($directory, $manifest, $plan['files']);
                 $operation->assert_locked();
-                $database->publish($existing, $manifest['excluded_tables'], $options['mode']);
+                $database->publish($plan['existing'], $manifest['excluded_tables'], $options['mode']);
                 self::finalize($target);
                 $operation->assert_locked();
 

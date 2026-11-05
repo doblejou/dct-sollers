@@ -11,7 +11,8 @@ el `APP.md` raíz; contrastar los contratos afectados con el código.
 
 | Archivo | Responsabilidad |
 |---|---|
-| `class-module.php` | `DCTWPHero_CDN_Module`: valores iniciales, validación, lectura, hooks, alcance, búfer y respuestas REST. |
+| `class-module.php` | `DCTWPHero_CDN_Module`: hooks, alcance, búfer y respuestas REST. |
+| `class-settings.php` | `DCTWPHero_CDN_Settings`: valores iniciales, validación y lectura mediante `defaults()`, `validate()` y `get()`. |
 | `class-rewriter.php` | `DCTWPHero_CDN_Rewriter`: transformación de cadenas con configuración ya validada y orígenes explícitos; sin hooks, opciones ni red. |
 | `class-admin.php` | `DCTWPHero_CDN_Admin`: Settings API, pantalla y comprobación remota explícita. |
 | `templates/settings.php` | Formulario y avisos con datos preparados; sin consultas ni lógica de negocio. |
@@ -84,7 +85,10 @@ CDN/origen; el aviso no implica configurar o verificar esas cabeceras.
   HEAD no soportado o una ruta wp-includes no distribuida puede dar fallo aunque
   otros recursos funcionen. No se borra el dominio por un fallo temporal.
 - Aviso si `cdn-enabler/cdn-enabler.php` está activo; no desactiva plugins ajenos.
-- Sin CSS/JS propios; configuración visible aun desactivado.
+- Configuración visible aun desactivado; controles nativos presentados mediante
+  el CSS3 administrativo compartido `assets/admin.css` (raíz), sin JS propio.
+- La comprobación usa un botón con ID propio y un nonce oculto sin ID para no
+  duplicar los identificadores del formulario de ajustes en la misma pantalla.
 
 ## Pruebas (rutas desde la raíz)
 
@@ -96,18 +100,18 @@ CDN/origen; el aviso no implica configurar o verificar esas cabeceras.
 - `tests/cdn/admin.php`: respuestas HTTP simuladas con `pre_http_request`, sin CDN real.
 - `python3 -B tests/cdn/integration.py --wp-path /var/www/wpdev4.local`: copia de
   núcleo y plugin en temporal privado, prefijo SQL aleatorio y servidor PHP local;
-  ejecuta módulos, ajustes, diagnóstico simulado y pruebas HTML/REST, nonce,
-  permisos, guardado/desactivación y regresión HTTP de login. `--http-host` permite
+  ejecuta motor, módulos, administración general, ajustes, diagnóstico simulado y
+  pruebas HTML/REST, nonce, permisos y guardado/desactivación. `--http-host` permite
   otro host .local que resuelva a 127.0.0.1 (por defecto wpdev4.local).
-- Reutiliza los helpers acotados `tests/migration/bootstrap.php`, `cleanup.php`
-  y funciones Python de ejecución/limpieza. El nombre temporal reservado sigue
-  `dct-migration-test-*` para sus validaciones de seguridad. Solo lee núcleo y
+- Reutiliza `tests/support/environment.py`, `bootstrap.php` y `cleanup.php`, sin
+  importar runners de otros módulos. El nombre temporal reservado es
+  `dctwphero-test-*` para sus validaciones de seguridad. Solo lee núcleo y
   credenciales del sitio de referencia; elimina exclusivamente tablas propias y
   su temporal. Una terminación forzada puede impedir la limpieza.
-- El mismo runner ejecuta `tests/frontend/settings.php` y, tras la regresión de
-  login, `tests/frontend/frontend_scenarios.py` con un tema separado que llama a
-  `wp_head()`. Comprueba que precargas e imagen real reciben las mismas URL CDN,
-  sin introducir dependencias entre módulos de producción.
+- Frontend tiene su entrada propia `tests/frontend/integration.py`, que ejecuta
+  sus ajustes y escenarios con un tema que llama a `wp_head()`. La coexistencia
+  comprueba que precargas e imagen real reciben las mismas URL CDN, sin depender
+  de haber ejecutado antes la suite CDN ni introducir dependencias de producción.
 
 No sustituye pruebas con un proveedor real, CORS en navegador ni cachés/constructores
 concretos. Los comandos documentados no implican una ejecución en cada tarea.

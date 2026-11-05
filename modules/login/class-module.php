@@ -6,65 +6,52 @@ final class DCTWPHero_Login_Module
 {
     ################################################
     #
-    #  settings
+    #  initialize
     #
-    #  Obtiene la configuración de login con los valores iniciales del módulo.
+    #  Actualiza el almacenamiento y conecta la limpieza incluso desactivado.
     #
     ################################################
-    public static function settings(): array
+    public static function initialize(): void
     {
-        $defaults = array();
-        $defaults['threshold'] = 3;
-        $defaults['window'] = 1;
-        $defaults['duration'] = 15;
-
-        $saved = get_option('dctwphero_settings', array());
-
-        return self::validate_settings(is_array($saved) ? array_replace($defaults, $saved) : null) ?? $defaults;
-    }
-
-    ################################################
-    #
-    #  limits
-    #
-    #  Define los máximos compartidos por validación y formulario de ajustes.
-    #
-    ################################################
-    public static function limits(): array
-    {
-        $limits = array();
-        $limits['threshold'] = 10000;
-        $limits['window'] = 10080;
-        $limits['duration'] = 10080;
-
-        return $limits;
-    }
-
-    ################################################
-    #
-    #  validate_settings
-    #
-    #  Normaliza ajustes completos o rechaza valores que no sean enteros en rango.
-    #
-    ################################################
-    public static function validate_settings(mixed $input): ?array
-    {
-        $result = array();
-
-        foreach (self::limits() as $key => $maximum)
+        if (!DCTWPHero_Store::upgrade())
         {
-            $value = is_array($input) ? ($input[$key] ?? null) : null;
-
-            if ((!is_int($value) && !is_string($value)) || !ctype_digit((string) $value)
-                || (int) $value < 1 || (int) $value > $maximum)
-            {
-                return null;
-            }
-
-            $result[$key] = (int) $value;
+            wp_die(
+                esc_html__('No se ha podido actualizar el almacenamiento de DCT WP Hero. Revisa el registro del servidor antes de reintentar.', 'dctwphero'),
+                esc_html__('Actualización pendiente', 'dctwphero'),
+                503
+            );
         }
 
-        return $result;
+        add_action('dctwphero_cleanup', 'DCTWPHero_Store::cleanup');
+    }
+
+    ################################################
+    #
+    #  activate
+    #
+    #  Prepara el almacenamiento y programa la limpieza periódica del login.
+    #
+    ################################################
+    public static function activate(): void
+    {
+        self::initialize();
+
+        if (!wp_next_scheduled('dctwphero_cleanup'))
+        {
+            wp_schedule_event(time() + HOUR_IN_SECONDS, 'hourly', 'dctwphero_cleanup');
+        }
+    }
+
+    ################################################
+    #
+    #  deactivate
+    #
+    #  Retira la tarea periódica sin borrar ajustes ni bloqueos.
+    #
+    ################################################
+    public static function deactivate(): void
+    {
+        wp_clear_scheduled_hook('dctwphero_cleanup');
     }
 
     ################################################
@@ -149,7 +136,7 @@ final class DCTWPHero_Login_Module
 
         $ip = self::client_ip();
 
-        if ($ip !== '' && !DCTWPHero_Store::record_failure($ip, self::settings()))
+        if ($ip !== '' && !DCTWPHero_Store::record_failure($ip, DCTWPHero_Login_Settings::get()))
         {
             error_log('DCT WP Hero: no se ha podido registrar un fallo de autenticación.');
         }

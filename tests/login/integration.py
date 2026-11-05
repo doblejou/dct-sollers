@@ -183,7 +183,7 @@ def main():
         modules_post['_wpnonce'] = modules_nonce
         check(request('/wp-admin/options.php', modules_post, subscriber_cookie)[0] == 403,
               'Suscriptor no cambia módulos')
-        wp('$s = DCTWPHero::settings(); $s["threshold"] = 1; '
+        wp('$s = DCTWPHero_Login_Settings::get(); $s["threshold"] = 1; '
            'DCTWPHero_Store::record_failure(' + json.dumps(client_ip) + ', $s);')
         check(request('/wp-login.php')[0] == 403, 'Bloqueo activo antes de desactivar módulo')
         status, saved_body = request('/wp-admin/options.php', modules_post, admin_cookie)
@@ -223,21 +223,21 @@ def main():
         settings_post['_wpnonce'] = settings_nonce
         check(request('/wp-admin/options.php', settings_post, subscriber_cookie)[0] == 403,
               'Suscriptor no modifica ajustes')
-        before = wp('echo wp_json_encode(DCTWPHero::settings());')
+        before = wp('echo wp_json_encode(DCTWPHero_Login_Settings::get());')
         for invalid in ('0', '10001', '1.5', '1e2'):
             settings_post['dctwphero_settings[threshold]'] = invalid
             status, invalid_body = request('/wp-admin/options.php', settings_post, admin_cookie)
             check(status == 200 and 'Introduce números enteros' in invalid_body
-                  and wp('echo wp_json_encode(DCTWPHero::settings());') == before,
+                  and wp('echo wp_json_encode(DCTWPHero_Login_Settings::get());') == before,
                   'Ajustes HTTP inválidos conservan configuración: ' + invalid)
         settings_post['dctwphero_settings[threshold]'] = '4'
         status, saved_body = request('/wp-admin/options.php', settings_post, admin_cookie)
-        check(status == 200 and json.loads(wp('echo wp_json_encode(DCTWPHero::settings());'))
+        check(status == 200 and json.loads(wp('echo wp_json_encode(DCTWPHero_Login_Settings::get());'))
                == {'threshold': 4, 'window': 3, 'duration': 5}, 'Guarda ajustes por HTTP')
         check('dctwphero_settings[threshold]' in saved_body
               and 'dctwphero_modules[login]' not in saved_body,
               'Guardar ajustes conserva la pestaña de login')
-        wp('$s = DCTWPHero::settings(); $s["threshold"]=1; '
+        wp('$s = DCTWPHero_Login_Settings::get(); $s["threshold"]=1; '
            'DCTWPHero_Store::record_failure(' + json.dumps(concurrent_ip) + ', $s);')
         _, body = request(login_path, cookies=admin_cookie)
         check(concurrent_ip in body, 'Lista la IP bloqueada')
@@ -262,7 +262,7 @@ def main():
         check(wp('echo DCTWPHero_Store::blocked_until(' + json.dumps(concurrent_ip) + ');') == '0',
               'Desbloqueo persistido')
 
-        code = ('$s = DCTWPHero::settings(); $s["threshold"]=6; '
+        code = ('$s = DCTWPHero_Login_Settings::get(); $s["threshold"]=6; '
                 'if (!DCTWPHero_Store::record_failure(' + json.dumps(concurrent_ip) +
                 ', $s)) { throw new RuntimeException("Fallo concurrente"); }')
         with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:

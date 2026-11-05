@@ -60,6 +60,49 @@ final class DCTWPHero_Frontend_Module
             add_action('wp_print_styles', self::remove_dashicons(...), PHP_INT_MAX);
         }
 
+        if ($settings['rest_links'])
+        {
+            remove_action('wp_head', 'rest_output_link_wp_head');
+            remove_action('template_redirect', 'rest_output_link_header', 11);
+        }
+
+        if ($settings['oembed_links'])
+        {
+            remove_action('wp_head', 'wp_oembed_add_discovery_links', 4);
+            remove_action('wp_head', 'wp_oembed_add_discovery_links');
+        }
+
+        if ($settings['generator'])
+        {
+            remove_action('wp_head', 'wp_generator');
+        }
+
+        if ($settings['feed_links'])
+        {
+            $filters = array
+            (
+                'feed_links_show_posts_feed',
+                'feed_links_extra_show_post_type_archive_feed',
+                'feed_links_extra_show_category_feed',
+                'feed_links_extra_show_tag_feed',
+                'feed_links_extra_show_tax_feed',
+                'feed_links_extra_show_author_feed',
+                'feed_links_extra_show_search_feed',
+
+            );
+
+            foreach ($filters as $filter)
+            {
+                add_filter($filter, '__return_false');
+            }
+        }
+
+        if ($settings['comments_feed_links'])
+        {
+            add_filter('feed_links_show_comments_feed', '__return_false');
+            add_filter('feed_links_extra_show_post_comments_feed', '__return_false');
+        }
+
         add_filter('wp_resource_hints', self::resource_hints(...), 20, 2);
         add_filter('wp_preload_resources', self::preload_resources(...), 20);
     }

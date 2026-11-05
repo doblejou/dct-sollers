@@ -23,6 +23,9 @@ con CDN ni otros módulos; el búfer CDN transforma el HTML que genera WordPress
 - Opción `dctwphero_frontend_settings`, sin tablas ni cron. Desactivar conserva;
   `uninstall.php` elimina la opción.
 - `emojis`, `rsd`, `shortlinks`, `dashicons`: 0/1 entero o cadena, inicialmente 0.
+- `rest_links`, `oembed_links`, `generator`, `feed_links`,
+  `comments_feed_links`: mismo contrato 0/1, inicialmente 0. Al leer opciones de
+  versiones anteriores se completan desactivadas sin alterar lo ya configurado.
 - `preconnect`, `dns_prefetch`, `fonts`, `image`: cadenas vacías inicialmente,
   máximo 16384 bytes cada una. Se normalizan saltos de línea y duplicados.
 - Hasta 10 preconnect HTTP(S) sin ruta (barra final admitida y normalizada),
@@ -44,6 +47,15 @@ con CDN ni otros módulos; el búfer CDN transforma el HTML que genera WordPress
 2. Retira hooks frontend de emojis (incluido `wp_enqueue_emoji_styles`, usado por
    WordPress actual), RSD y shortlink. La cabecera shortlink se evita retirando
    el callback de prioridad 11, antes de que se ejecute. No se bloquea XML-RPC.
+   REST retira `rest_output_link_wp_head` y `rest_output_link_header` (11);
+   oEmbed retira `wp_oembed_add_discovery_links` tanto en prioridad 4 como 10;
+   generator retira solo `wp_generator` de `wp_head`, nunca el de feeds.
+   No se deshabilitan endpoints REST/oEmbed ni los scripts de incrustación.
+   RSS de contenido usa `feed_links_show_posts_feed` y los seis filtros
+   `feed_links_extra_show_*` de archivos (tipo, categoría, etiqueta, taxonomía,
+   autor y búsqueda). RSS de comentarios usa `feed_links_show_comments_feed` y
+   `feed_links_extra_show_post_comments_feed`. No retirar `feed_links_extra`
+   completo: mezclaría ambos controles. Los feeds permanecen accesibles por URL.
 3. Dashicons solo para anónimos: dequeue tardío en enqueue y antes de imprimir;
    no deregister, por lo que una dependencia puede volver a exigir la hoja.
 4. `wp_resource_hints` amplía listas nativas. Emojis retira exactamente `s.w.org`
@@ -62,6 +74,14 @@ hints (no offloading) y la comprobación estricta de REQUEST_METHOD (no se refle
 ni persiste). No se ocultan sniffs por archivo ni se añaden saneamientos que
 conviertan un método rechazado en GET. Justificación pública en `../../review-notes.txt`.
 
+`class-admin.php::cleanup_options()` prepara las nueve opciones de limpieza con
+etiqueta, qué elimina, qué conserva y precaución; `cleanup_option()` comparte
+esa estructura. La plantilla renderiza fieldsets con legend/checkbox y listas
+descriptivas siempre visibles, asociadas por `aria-describedby`, en una cuadrícula
+adaptable con el CSS administrativo compartido `assets/admin.css` (raíz), sin JS
+propio. La pantalla explica el ahorro pequeño de retirar descubrimiento y que
+ocultar generator no es seguridad. No introducir consultas ni negocio en la plantilla.
+
 El CDN reescribe precargas si coinciden origen, extensión y exclusiones. Una URL
 precargada debe coincidir con el recurso real, incluidos parámetros. No afirmar
 que otros plugins o CSS externo tendrán siempre las mismas URL. Invalidar caché
@@ -71,12 +91,19 @@ DietPress ni se importan sus ajustes.
 ## Pruebas (rutas desde raíz)
 
 - `tests/frontend/settings.php`: validación, corrupción, límites, rechazo y conservación.
+  Incluye tipos de las cinco casillas nuevas y lectura de ajustes antiguos sin activarlas.
 - `tests/frontend/fixture.php`: tema mínimo con `wp_head`, `wp_footer` y Dashicons.
 - `tests/frontend/frontend_scenarios.py`: HTTP real, portada estática/blog,
   precargas, CDN, permisos, nonce y desactivación conservando configuración.
-- `python3 -B tests/cdn/integration.py --wp-path /var/www/wpdev4.local` ejecuta
-  estos escenarios tras la regresión CDN/login en su instalación desechable.
-  Usa prefijo aleatorio y helpers acotados de migración para crear/limpiar el entorno;
+  Comprueba limpiezas de descubrimiento aisladas y combinadas, cabeceras REST,
+  feeds de contenido/comentarios por separado, archivos de categoría/etiqueta/autor/
+  búsqueda, REST y oEmbed funcionando, generator del feed intacto, POST/preview,
+  reversibilidad y ayuda visible asociada a las casillas con IDs únicos.
+- `python3 -B tests/frontend/integration.py --wp-path /var/www/wpdev4.local` ejecuta
+  ajustes, administración general y estos escenarios en su instalación desechable
+  propia, sin ejecutar ni importar el runner CDN. La coexistencia con CDN es un
+  escenario explícito, no una dependencia del estado que deje otra suite.
+  Usa prefijo aleatorio y `tests/support/` para crear/limpiar el entorno;
   no modifica la instalación de referencia. Las pruebas no descargan destinos externos.
 - `tests/modules.php` y `tests/login/integration.py` incluyen el nuevo estado.
 

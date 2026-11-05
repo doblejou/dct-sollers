@@ -41,13 +41,13 @@ final class DCTWPHero_Login_Admin
     ################################################
     public static function sanitize(mixed $input): array
     {
-        $result = DCTWPHero_Login_Module::validate_settings($input);
+        $result = DCTWPHero_Login_Settings::validate($input);
 
         if ($result === null)
         {
             add_settings_error('dctwphero_settings', 'invalid_settings', __('Introduce números enteros dentro de los rangos indicados.', 'dctwphero'));
 
-            return DCTWPHero_Login_Module::settings();
+            return DCTWPHero_Login_Settings::get();
         }
 
         return $result;
@@ -67,9 +67,9 @@ final class DCTWPHero_Login_Admin
             wp_die(esc_html__('No tienes permisos.', 'dctwphero'), '', 403);
         }
 
-        $settings = DCTWPHero_Login_Module::settings();
+        $settings = DCTWPHero_Login_Settings::get();
         $enabled = DCTWPHero::module_enabled('login');
-        $limits = DCTWPHero_Login_Module::limits();
+        $limits = DCTWPHero_Login_Settings::limits();
         $count = DCTWPHero_Store::active_count();
         $pages = max(1, (int) ceil($count / 50));
         // Read-only pagination; no state changes, so a nonce is not required.

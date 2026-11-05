@@ -10,7 +10,7 @@ $wpdb->prefix .= 'store_test_' . bin2hex(random_bytes(4)) . '_';
 $table = DCTWPHero_Store::table();
 $suppressed = $wpdb->suppress_errors(true);
 $ip = '192.0.2.249';
-$settings = DCTWPHero_Login_Module::settings();
+$settings = DCTWPHero_Login_Settings::get();
 $settings['threshold'] = 3;
 $filter = null;
 

@@ -18,6 +18,11 @@ final class DCTWPHero_Frontend_Settings
         $settings['rsd'] = 0;
         $settings['shortlinks'] = 0;
         $settings['dashicons'] = 0;
+        $settings['rest_links'] = 0;
+        $settings['oembed_links'] = 0;
+        $settings['generator'] = 0;
+        $settings['feed_links'] = 0;
+        $settings['comments_feed_links'] = 0;
         $settings['preconnect'] = '';
         $settings['dns_prefetch'] = '';
         $settings['fonts'] = '';

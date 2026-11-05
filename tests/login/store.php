@@ -58,28 +58,28 @@ try
 
     $_SERVER['REMOTE_ADDR'] = '2001:0db8:0000:0000:0000:0000:0000:0240';
     $_SERVER['HTTP_X_FORWARDED_FOR'] = '198.51.100.1';
-    $check(DCTWPHero::client_ip() === $ipv6, 'Normaliza IPv6 e ignora cabecera falsa');
+    $check(DCTWPHero_Login_Module::client_ip() === $ipv6, 'Normaliza IPv6 e ignora cabecera falsa');
     $_SERVER['REMOTE_ADDR'] = 'invalid';
-    $check(DCTWPHero::client_ip() === '', 'Rechaza IP inválida');
+    $check(DCTWPHero_Login_Module::client_ip() === '', 'Rechaza IP inválida');
 
     foreach (array('192.0.2.1', '::1') as $address)
     {
         $_SERVER['REMOTE_ADDR'] = $address;
-        $check(DCTWPHero::client_ip() === $address, 'Acepta IP válida del servidor');
+        $check(DCTWPHero_Login_Module::client_ip() === $address, 'Acepta IP válida del servidor');
     }
 
     foreach (array(null, array(), false, '', '256.0.0.1', '127.0.0.1:80', '2001:db8::1%eth0') as $address)
     {
         $_SERVER['REMOTE_ADDR'] = $address;
-        $check(DCTWPHero::client_ip() === '', 'Rechaza tipos y formatos de IP no admitidos');
+        $check(DCTWPHero_Login_Module::client_ip() === '', 'Rechaza tipos y formatos de IP no admitidos');
     }
 
     unset($_SERVER['REMOTE_ADDR']);
-    $check(DCTWPHero::client_ip() === '', 'Cabeceras no suplen REMOTE_ADDR ausente');
+    $check(DCTWPHero_Login_Module::client_ip() === '', 'Cabeceras no suplen REMOTE_ADDR ausente');
 
     $invalid = array();
     $invalid['threshold'] = '-1';
-    $check(DCTWPHero_Login_Admin::sanitize($invalid) === DCTWPHero::settings(), 'Rechaza ajustes inválidos');
+    $check(DCTWPHero_Login_Admin::sanitize($invalid) === DCTWPHero_Login_Settings::get(), 'Rechaza ajustes inválidos');
     $check(DCTWPHero_Login_Admin::sanitize($settings) === $settings, 'Acepta ajustes válidos');
 
     $wpdb->query($wpdb->prepare('UPDATE %i SET blocked_until = 0, updated_at = %d WHERE ip = %s', $table, time() - 604801, $ip));

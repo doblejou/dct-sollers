@@ -11,7 +11,8 @@ Contrastar en el código los detalles afectados y actualizarla al cambiarlos.
 
 | Archivo | Responsabilidad / punto de entrada |
 |---|---|
-| `class-module.php` | `DCTWPHero_Login_Module`: ajustes, límites, IP, hooks y protección. |
+| `class-module.php` | `DCTWPHero_Login_Module`: ciclo de vida, IP, hooks y protección. |
+| `class-settings.php` | `DCTWPHero_Login_Settings`: valores iniciales, límites, validación y lectura. |
 | `class-store.php` | `DCTWPHero_Store`: esquema, migraciones, transacciones, bloqueos y limpieza. El nombre histórico se conserva. |
 | `class-admin.php` | `DCTWPHero_Login_Admin`: Settings API, validación administrativa, listado y desbloqueo. |
 | `templates/settings.php` | Presentación de ajustes y bloqueos; recibe datos preparados por `render()`. Sin consultas ni reglas de negocio. |
@@ -19,13 +20,18 @@ Contrastar en el código los detalles afectados y actualizarla al cambiarlos.
 Conexiones externas (rutas desde la raíz):
 
 - `dctwphero.php`: carga las clases y declara callbacks en `DCTWPHero::modules()`.
-  `boot()` ejecuta `maybe_upgrade()` antes de registrar módulos. La administración
+  `boot()` ejecuta `initialize_modules()` antes de registrar módulos. La administración
   se registra incluso con login desactivado; la protección, solo si está activo.
-- `DCTWPHero::settings()` y `DCTWPHero::client_ip()` delegan en este módulo.
+- No hay delegados de login en `DCTWPHero`: usar `DCTWPHero_Login_Settings::get()`
+  y `DCTWPHero_Login_Module::client_ip()` directamente.
 - `includes/class-admin.php` y `templates/`: navegación y estados generales,
   no lógica específica de login.
-- El hook global `dctwphero_cleanup` llama a `DCTWPHero_Store::cleanup()`.
-  La activación del plugin programa su ejecución horaria; la desactivación la retira.
+- El callback de registro `initialize` actualiza el almacén y conecta
+  `dctwphero_cleanup` a `DCTWPHero_Store::cleanup()`, también con login desactivado.
+  Usa un callable estable para no duplicar el hook al reinicializar. Los callbacks
+  `activate` y `deactivate` programan o retiran su cron horario; son del ciclo de
+  vida del plugin completo, no de la casilla del módulo. Activar prepara el esquema
+  antes de programar y no duplica eventos. El coordinador no conoce tabla ni cron.
 - `uninstall.php`: elimina tabla, opciones del plugin y tarea periódica.
 
 ## Flujo y contratos de seguridad
@@ -60,9 +66,9 @@ Invariantes:
 - Opción `dctwphero_settings`: `threshold` (3), `window` (1 minuto), `duration`
   (15 minutos). Mínimo 1; máximos 10000, 10080 y 10080 respectivamente.
   Los valores iniciales no sobrescriben ajustes válidos ya guardados.
-- `validate_settings()` acepta enteros o cadenas de dígitos; rechaza booleanos,
+- `Settings::validate()` acepta enteros o cadenas de dígitos; rechaza booleanos,
   decimales, incompletos y fuera de rango. `limits()` centraliza los máximos.
-- `settings()` completa ajustes persistidos parciales con valores iniciales;
+- `Settings::get()` completa ajustes persistidos parciales con valores iniciales;
   ante valores inválidos usa todos los iniciales. `sanitize()` rechaza un envío
   inválido, muestra error y conserva los ajustes anteriores normalizados.
 - Estado general separado en `dctwphero_modules['login']`; sin estado guardado
@@ -77,7 +83,7 @@ Invariantes:
   ejecuta pasos secuenciales y guarda la versión tras cada éxito. Rechaza downgrade.
   El paso 1 usa `dbDelta()` y verifica motor, columnas e índices sin borrar filas.
   Para cambiar esquema, aumentar versión y añadir paso; no editar solo el inicial.
-  Un fallo llega a `maybe_upgrade()` y detiene la petición con 503.
+  Un fallo llega a `Module::initialize()` y detiene la petición con 503.
 
 ## Administración
 
@@ -90,7 +96,11 @@ Invariantes:
 - La paginación elimina las barras de WordPress antes de convertir a entero y
   limita la página al rango disponible. La navegación y los avisos GET son de
   solo lectura, sin nonce; el desbloqueo sigue exigiendo POST y nonce.
-- Usar estilos y controles nativos de WordPress, sin CSS ni JavaScript propios.
+- Controles nativos de WordPress con CSS3 compartido en `assets/admin.css` (raíz),
+  limitado a la pantalla del plugin. Sin JavaScript propio. El listado tiene un
+  contenedor desplazable por teclado para pantallas estrechas.
+- Los formularios de desbloqueo generan el nonce con `wp_create_nonce()` en un
+  campo oculto sin ID, para no repetir identificadores al listar varias IP.
 
 ## Dónde tocar y cómo comprobar
 
@@ -98,7 +108,7 @@ Comandos desde la raíz, **solo en pruebas**: las integraciones modifican datos.
 
 - Hooks, alcance o IP: `class-module.php`; regresión HTTP:
   `python3 tests/login/integration.py --wp-path /var/www/wpdev4.local --url http://wpdev4.local`.
-- Ajustes: `class-module.php`, `class-admin.php` y plantilla;
+- Ajustes: `class-settings.php`, `class-admin.php` y plantilla;
   `tests/login/settings.php` cubre tipos, límites y lectura de datos inválidos.
   La integración HTTP también comprueba paginación con arrays, cero, negativos,
   páginas excesivas, texto y barras, sin exigir nonce para navegación de solo lectura.
@@ -112,6 +122,13 @@ Comandos desde la raíz, **solo en pruebas**: las integraciones modifican datos.
 - Registro general: `wp --path=/var/www/wpdev4.local eval-file tests/modules.php`.
   El formulario HTTP de estados incluye todos los módulos actuales, también
   `frontend`, aunque la prueba solo altere la protección de login.
+- Entrada independiente recomendada:
+  `python3 -B tests/login/run.py --wp-path /var/www/wpdev4.local`.
+  Crea su instalación y prefijo SQL propios con `tests/support/`, ejecuta registro,
+  `tests/lifecycle.php`, administración, ajustes, almacén, esquema y regresión HTTP.
+  El sitio de referencia solo aporta núcleo y credenciales; no se modifica.
+  La prueba de ciclo de vida comprueba inicialización con módulos desactivados,
+  conservación de ajustes/estados y cron de activación/desactivación reejecutable.
 - La suite desechable `python3 -B tests/migration/integration.py --wp-path /var/www/wpdev4.local --http-host wpdev4.local`
   ejecuta también pruebas de ajustes y almacenamiento de login. Véase
   `../../tests/migration/README.md` para cobertura y límites.
