@@ -49,7 +49,8 @@ def arguments(wp, archive, fixture, content):
     for constant, option in (('WP_HOME', 'home-url'), ('WP_SITEURL', 'site-url')):
         config.write_text(original_config.replace("if (!defined('ABSPATH'))", f"define('{constant}', 'http://origin.test');\nif (!defined('ABSPATH'))"))
         try:
-            wp('dctwpsollers', 'import', f'--file={archive}', '--mode=merge', '--dry-run', f'--{option}=https://conflict.test', expected=1)
+            diagnostic = wp('dctwpsollers', 'import', f'--file={archive}', '--mode=merge', '--dry-run', f'--{option}=https://conflict.test', expected=1)
+            assert f'La URL solicitada entra en conflicto con {constant}.' in diagnostic, 'El diagnóstico CLI identifica la constante en conflicto'
         finally:
             config.write_text(original_config)
     maintenance = content.parent / '.maintenance'

@@ -16,6 +16,8 @@
         <input type="hidden" name="dctwpsollers_frontend_settings[<?php echo esc_attr($dctwpsollers_frontend_key); ?>]" value="0">
         <fieldset class="dctwpsollers-cleanup-card">
             <legend><strong><label for="dctwpsollers-frontend-<?php echo esc_attr($dctwpsollers_frontend_key); ?>"><input type="checkbox" id="dctwpsollers-frontend-<?php echo esc_attr($dctwpsollers_frontend_key); ?>" name="dctwpsollers_frontend_settings[<?php echo esc_attr($dctwpsollers_frontend_key); ?>]" value="1" aria-describedby="dctwpsollers-frontend-<?php echo esc_attr($dctwpsollers_frontend_key); ?>-help" <?php checked($settings[$dctwpsollers_frontend_key], 1); ?>> <?php echo esc_html($dctwpsollers_frontend_option['label']); ?></label></strong></legend>
+            <details class="dctwpsollers-cleanup-help">
+            <summary><?php esc_html_e('Qué elimina, qué conserva y precauciones', 'dctwpsollers'); ?></summary>
             <dl id="dctwpsollers-frontend-<?php echo esc_attr($dctwpsollers_frontend_key); ?>-help">
                 <dt><strong><?php esc_html_e('Qué elimina', 'dctwpsollers'); ?></strong></dt>
                 <dd><?php echo esc_html($dctwpsollers_frontend_option['removes']); ?></dd>
@@ -24,6 +26,7 @@
                 <dt><strong><?php esc_html_e('Precaución', 'dctwpsollers'); ?></strong></dt>
                 <dd><?php echo esc_html($dctwpsollers_frontend_option['caution']); ?></dd>
             </dl>
+            </details>
         </fieldset>
     <?php endforeach; ?>
     </div>

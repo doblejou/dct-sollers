@@ -3,7 +3,7 @@
  * Plugin Name: DCTWP Sollers
  * Description: Herramientas modulares para WordPress con protección de login configurable.
  * Author: Jose Gonzalez - Daycom Technologies
- * Version: 0.2.20
+ * Version: 0.2.23
  * Requires at least: 7.0
  * Requires PHP: 8.4
  * License: GPL-2.0-or-later

@@ -70,6 +70,10 @@ wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=mirror --yes
   visibles en errores/éxitos y en el subcomando verificado; preserva texto normal,
   espacios y acentos, sin escape HTML. Las excepciones internas mantienen el
   diagnóstico original y se tratan al imprimirlo, únicamente en CLI.
+  Las dos excepciones dinámicas de `Import::target()` y `Import::restore_files()`
+  tienen anotaciones PHPCS solo en la línea del throw: constantes del mapa fijo
+  WP_HOME/WP_SITEURL y ruta mirror validada, respectivamente. No aplicar escape
+  HTML ni ocultar otros análisis; `scenarios.py` comprueba el diagnóstico de conflicto.
 
 ## Secuencia de exportación
 

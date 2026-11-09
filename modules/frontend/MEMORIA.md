@@ -78,9 +78,11 @@ conviertan un método rechazado en GET. Justificación pública en `../../review
 
 `class-admin.php::cleanup_options()` prepara las nueve opciones de limpieza con
 etiqueta, qué elimina, qué conserva y precaución; `cleanup_option()` comparte
-esa estructura. La plantilla renderiza fieldsets con legend/checkbox y listas
-descriptivas siempre visibles, asociadas por `aria-describedby`, en una cuadrícula
-adaptable con el CSS administrativo compartido `assets/admin.css` (raíz), sin JS
+esa estructura. La plantilla mantiene los fieldsets con legend/checkbox visibles
+y agrupa las tres explicaciones de cada opción en su propio `details` cerrado por
+defecto, con `summary` nativo. Cada explicación conserva su asociación por
+`aria-describedby` con la casilla correspondiente. La cuadrícula es adaptable mediante el CSS
+administrativo compartido `assets/admin.css` (raíz), sin JS
 propio. La pantalla explica el ahorro pequeño de retirar descubrimiento y que
 ocultar generator no es seguridad. No introducir consultas ni negocio en la plantilla.
 
@@ -100,7 +102,8 @@ DietPress ni se importan sus ajustes.
   Comprueba limpiezas de descubrimiento aisladas y combinadas, cabeceras REST,
   feeds de contenido/comentarios por separado, archivos de categoría/etiqueta/autor/
   búsqueda, REST y oEmbed funcionando, generator del feed intacto, POST/preview,
-  reversibilidad y ayuda visible asociada a las casillas con IDs únicos.
+   reversibilidad y ayuda asociada a las casillas con IDs únicos, agrupada en un
+   acordeón por opción cerrado por defecto que no oculta las casillas.
 - `python3 -B tests/frontend/integration.py --wp-path /var/www/wpdev4.local` ejecuta
   ajustes, administración general y estos escenarios en su instalación desechable
   propia, sin ejecutar ni importar el runner CDN. La coexistencia con CDN es un

@@ -4,7 +4,7 @@ Tags: security, login, migration, cdn
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.4
-Stable tag: 0.2.20
+Stable tag: 0.2.23
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -90,6 +90,20 @@ No. Protection is IP-based and limited to wp-login.php. It does not replace serv
 No. The migration tab only displays instructions; exporting and importing require WP-CLI.
 
 == Changelog ==
+
+= 0.2.23 =
+
+* Group each Frontend cleanup option's explanations in its own collapsed accordion while keeping checkboxes visible.
+
+= 0.2.22 =
+
+* Package the current development changes for distribution.
+
+= 0.2.21 =
+
+* Rename the plugin to DCTWP Sollers with the dctwpsollers slug and independent settings, storage and CLI commands.
+* Install separately without importing previous plugin settings, login blocks or migration archives.
+* Document narrowly scoped CLI diagnostic exceptions and test that URL conflicts identify the relevant configuration constant.
 
 = 0.2.20 =
 

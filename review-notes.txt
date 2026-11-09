@@ -126,6 +126,11 @@ terminal control sequences without HTML-encoding normal diagnostic text. Each
 exception annotation is specific to this context; HTML templates must still use
 WordPress context-appropriate escaping. The same boundary protects the diagnostic
 subcommand shown after verification. Tests cover controls and unchanged UTF-8.
+The two dynamic exceptions in class-import.php follow that same CLI boundary:
+target() names only WP_HOME or WP_SITEURL from its fixed map; restore_files()
+reports a validated mirror-relative path when unlink fails. Only those throw
+lines ignore ExceptionNotEscaped; no HTML escaping is added to CLI diagnostics.
+Integration tests verify that conflicting URL constants remain named in errors.
 
 Remaining warning contexts
 --------------------------

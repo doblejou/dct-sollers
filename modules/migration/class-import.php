@@ -31,6 +31,8 @@ final class DCTWPSollers_Migration_Import
         {
             if (defined($constant) && untrailingslashit(constant($constant)) !== $target[$key])
             {
+                // CLI-only diagnostic; Command::terminal() escapes controls at the output boundary.
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 throw new RuntimeException('La URL solicitada entra en conflicto con ' . $constant . '.');
             }
         }
@@ -107,6 +109,8 @@ final class DCTWPSollers_Migration_Import
             // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
             if (!unlink($destination))
             {
+                // Validated mirror path; Command::terminal() escapes controls before CLI output, not HTML.
+                // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 throw new RuntimeException('No se puede eliminar el archivo extra: ' . $path);
             }
         }

@@ -52,7 +52,8 @@ try
 
         if ($tab === 'frontend')
         {
-            $check(substr_count($html, 'class="dctwpsollers-cleanup-card"') === 9, 'Las nueve limpiezas conservan su ayuda visible');
+            $check(substr_count($html, '<fieldset class="dctwpsollers-cleanup-card"') === 9, 'Las nueve casillas de limpieza permanecen visibles');
+            $check(substr_count($html, '<details class="dctwpsollers-cleanup-help">') === 9, 'Cada opción tiene su acordeón cerrado por defecto');
         }
 
         if ($tab === 'migration')

@@ -164,12 +164,19 @@ def cleanup_scenarios(wp, request, admin, path, post, url):
     assert not any(markers(body, headers).values()), 'Opciones combinadas retiran solo descubrimientos seleccionados'
     admin_path = '/wp-admin/options-general.php?page=dctwpsollers&tab=frontend'
     body = request(admin_path, opener=admin)[1]
-    assert body.count('Qué elimina') == body.count('Qué conserva') == body.count('Precaución') == 9
+    help_panels = re.findall(r'<details\b([^>]*)>(.*?)</details>', body, re.S)
+    assert len(help_panels) == 9, 'Un acordeón de ayuda por opción'
+    for attributes, panel_body in help_panels:
+        assert not re.search(r'\bopen\b', attributes), 'Ayuda cerrada por defecto'
+        assert panel_body.count('<dt>') == 3, 'Cada acordeón agrupa las tres explicaciones'
+    help_body = ''.join(panel_body for _, panel_body in help_panels)
+    assert help_body.count('<dt><strong>Qué elimina') == help_body.count('<dt><strong>Qué conserva') == help_body.count('<dt><strong>Precaución') == 9
+    assert 'type="checkbox"' not in help_body, 'Casillas visibles fuera del acordeón'
     assert 'no una medida de seguridad' in body and 'su ahorro de rendimiento es pequeño' in body
     for key in new_flags:
         control = re.search(r'<input\b[^>]*type="checkbox"[^>]*id="dctwpsollers-frontend-' + key + r'"[^>]*>', body).group(0)
         assert 'checked=' in control and f'aria-describedby="dctwpsollers-frontend-{key}-help"' in control
-        assert f'id="dctwpsollers-frontend-{key}-help"' in body
+        assert f'id="dctwpsollers-frontend-{key}-help"' in help_body
     ids = re.findall(r'\bid="([^"]+)"', body)
     assert len(ids) == len(set(ids)), 'Identificadores de la pantalla únicos'
     draft = wp('post', 'create', '--post_status=draft', '--post_title=Cleanup preview', '--porcelain')

@@ -285,6 +285,16 @@
     line-height: 1.6;
 }
 
+.dctwpsollers .dctwpsollers-cleanup-help > summary
+{
+    padding: 12px 16px;
+    border: 1px solid var(--sollers-border);
+    border-radius: 6px;
+    background: var(--sollers-soft);
+    cursor: pointer;
+    font-weight: 600;
+}
+
 .dctwpsollers .dctwpsollers-cleanup-card dl
 {
     margin: 4px 0 0;
@@ -347,6 +357,7 @@
 .dctwpsollers button:focus-visible,
 .dctwpsollers input:focus-visible,
 .dctwpsollers textarea:focus-visible,
+.dctwpsollers summary:focus-visible,
 .dctwpsollers [tabindex]:focus-visible
 {
     outline: 2px solid var(--sollers-accent);
