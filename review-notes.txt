@@ -20,7 +20,8 @@ turn an arbitrary package into untrusted input that is safe to execute.
 The early import bootstrap is an intentional Plugin Check false positive
 -----------------------------------------------------------------------
 modules/migration/import-bootstrap.php is loaded with wp --require BEFORE
-WordPress. It requires WP_CLI to be defined and true, rejects an already defined
+WordPress. It requires PHP_SAPI=cli, WP_CLI to be strictly true and the WP_CLI
+class to be already loaded (without autoloading), rejects an already defined
 ABSPATH, and requires --skip-plugins and --skip-themes. After WordPress loads it
 also checks that this plugin and its migration module are active.
 
@@ -28,10 +29,20 @@ Requiring ABSPATH at the top would break the isolated startup needed to avoid
 shutdown callbacks from plugins that an import replaces. Do not add a redundant
 or misleading ABSPATH check just to satisfy the scanner. HTTP direct access exits
 before any operations. The other helper scripts require both ABSPATH and WP_CLI.
-Plugin Check 2.1.0 does not recognize this pre-WordPress guard.
+HTTP is rejected even if another script defines WP_CLI. Plugin Check 2.1.0 does
+not recognize this pre-WordPress guard.
 
-SQL execution and unbuffered results
------------------------------------
+Settings API sanitization
+-------------------------
+Every register_setting() supplies type=array and an explicit named static
+sanitize_callback. Each validator checks the complete expected structure and
+preserves previous normalized settings on invalid input. tests/modules.php checks
+the registered callbacks and invokes them through WordPress sanitize_option(),
+not just directly. The existing validation is retained, not replaced with a
+generic text sanitizer that cannot validate these structured settings.
+
+SQL execution and bounded results
+---------------------------------
 Database::query() is an internal executor, not a sanitization function. Callers
 must supply static SQL, wpdb::prepare() results, or validated schema/identifier
 fragments. identifier() only accepts 1-64 ASCII letters, digits, underscores or
@@ -46,12 +57,18 @@ trace these protections through callers. Do not add a raw user value there or
 pass an entire statement to esc_sql(). SQL contract/integration tests cover
 invalid identifiers, hostile-looking binary data and invalid package structures.
 
-The mysqli functions use wpdb's EXISTING connection. MYSQLI_USE_RESULT avoids
-buffering an entire table and preserves the transaction snapshot. Its result
-must be consumed and freed before another query. mysqli_warning_count() reads
-that connection's warning state immediately after inserts/foreign-key creation;
-nonzero warnings stop publication instead of silently accepting truncation.
-No independent connection is opened and no credentials are exposed in errors.
+Exports use wpdb on its existing connection, in batches of 100 rows within the
+same read-only REPEATABLE READ snapshot. Identifier placeholders (%i) and integer
+pagination placeholders (%d) are prepared by wpdb. USE INDEX () forces the same
+full InnoDB clustered scan for each batch, including tables without a primary
+key. NULL and binary values are retained. No entire table is buffered, although
+individual rows may be large. OFFSET scans become more expensive on large tables;
+this is not a constant-time or constant-byte-memory export.
+
+SHOW COUNT(*) WARNINGS is executed through wpdb immediately after inserts and
+foreign-key creation. This diagnostic statement preserves the warning state;
+nonzero warnings stop publication instead of accepting truncation. The migration
+database class makes no direct mysqli calls and opens no independent connection.
 
 Native filesystem operations
 ----------------------------

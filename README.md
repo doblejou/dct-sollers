@@ -331,7 +331,13 @@ wp --path=/var/www/wpdev4.local plugin check "$PWD" --exclude-directories=tests,
 
 Plugin Check no sustituye la revisión de seguridad ni las pruebas funcionales.
 El bootstrap CLI de migración se carga antes de definir `ABSPATH`: su guardia
-`WP_CLI` es intencionada. No añadir una exigencia de `ABSPATH` a ese archivo.
+`PHP_SAPI === 'cli'`, `WP_CLI === true` y clase `WP_CLI` ya cargada es intencionada.
+No añadir una exigencia de `ABSPATH` a ese archivo.
+Los ajustes registran callbacks estáticos explícitos; `tests/modules.php` verifica
+su registro y ejecución mediante Settings API. La exportación usa lotes de 100
+filas con `wpdb::prepare()` y la misma instantánea InnoDB; conserva binarios y
+NULL sin cargar tablas completas. La paginación OFFSET tiene coste creciente
+en tablas grandes; no se garantiza un límite de bytes por fila.
 Los avisos sobre operaciones nativas de archivos, SQL dinámico y excepciones CLI
 del migrador requieren revisión contextual; no deben ocultarse globalmente ni
 resolverse aplicando escape HTML al terminal o cambiando garantías de publicación.

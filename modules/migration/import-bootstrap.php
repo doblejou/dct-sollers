@@ -1,6 +1,9 @@
 <?php
 
-defined('WP_CLI') && WP_CLI || exit;
+if (PHP_SAPI !== 'cli' || !defined('WP_CLI') || WP_CLI !== true || !class_exists('WP_CLI', false))
+{
+    exit;
+}
 
 if (defined('ABSPATH') || WP_CLI::get_config('skip-plugins') !== true || WP_CLI::get_config('skip-themes') !== true)
 {

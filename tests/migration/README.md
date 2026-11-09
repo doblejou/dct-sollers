@@ -22,6 +22,8 @@ con las salvaguardas de `cleanup.php`, nunca mediante comodines amplios.
   cambiar texto UTF-8 normal.
 - `database-contract.php`: respuestas SQL controladas para ramas que requieren
   privilegios no siempre disponibles; los dobles no ejecutan SQL.
+  Comprueba lotes de 0, 100 y 201 filas, errores de lectura, identificadores,
+  binarios/NULL/duplicados y lectura diagnóstica de avisos SQL mediante wpdb.
 - `bootstrap-contract.php`: filtros de caché antes de cargar las funciones de
   WordPress, ejecutado directamente con PHP y sin modificar ningún sitio.
 - `cache.php`: caché de objetos y contrato de Elementor con dobles, incluidos fallos.
@@ -36,6 +38,9 @@ con las salvaguardas de `cleanup.php`, nunca mediante comodines amplios.
   exportación y antes de publicar tablas; ZIP no publicado o diagnóstico explícito
   de fallo de limpieza posterior, y mantenimiento según la fase de importación.
 - `integration.py`: ciclo completo, aislamiento y regresión HTTP opcional.
+  Incluye exportación/restauración de 205 filas duplicadas sin PK con binarios y
+  NULL, rechazo del bootstrap sin runtime CLI y acceso HTTP con WP_CLI definido.
+  `../modules.php` comprueba los callbacks registrados mediante Settings API.
 - `bootstrap.php` y `cleanup.php`: configuración y limpieza limitadas a pruebas.
   El entorno activa `WP_CACHE` para ejecutar también el filtro temprano que impide
   cargar `advanced-cache.php` durante la importación aislada.

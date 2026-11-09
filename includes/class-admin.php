@@ -27,7 +27,7 @@ final class DCTWPHero_Admin
     {
         $modules = array();
         $modules['type'] = 'array';
-        $modules['sanitize_callback'] = self::sanitize_modules(...);
+        $modules['sanitize_callback'] = 'DCTWPHero_Admin::sanitize_modules';
         register_setting('dctwphero_modules', 'dctwphero_modules', $modules);
     }
 
