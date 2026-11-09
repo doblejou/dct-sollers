@@ -7,6 +7,29 @@ $check = DCTWPHero_Checks::that(...);
 
 try
 {
+    $registrations = array();
+    $registrations['dctwphero_modules'] = 'DCTWPHero_Admin';
+    $registrations['dctwphero_settings'] = 'DCTWPHero_Login_Admin';
+    $registrations['dctwphero_cdn_settings'] = 'DCTWPHero_CDN_Admin';
+
+    if (class_exists('DCTWPHero_Frontend_Admin'))
+    {
+        $registrations['dctwphero_frontend_settings'] = 'DCTWPHero_Frontend_Admin';
+    }
+
+    foreach ($registrations as $option => $class)
+    {
+        $class::register_settings();
+        $registered = get_registered_settings()[$option];
+        $callback = $registered['sanitize_callback'];
+        $check($registered['type'] === 'array' && is_callable($callback), 'Settings API registra un validador invocable: ' . $option);
+        $check(has_filter('sanitize_option_' . $option, $callback) !== false, 'Settings API conecta el saneamiento: ' . $option);
+        $check(sanitize_option($option, null) === $callback(null), 'Settings API rechaza entradas inválidas conservando ajustes: ' . $option);
+        $current = get_option($option, array());
+        $check(sanitize_option($option, $current) === $callback($current), 'Settings API aplica el validador a los ajustes: ' . $option);
+        unregister_setting($registered['group'], $option);
+    }
+
     delete_option('dctwphero_modules');
     $check(DCTWPHero::module_enabled('login'), 'Instalaciones sin opción mantienen la protección activa');
     $check(DCTWPHero::module_enabled('migration'), 'Migración activa por defecto');

@@ -37,6 +37,8 @@ con CDN ni otros módulos; el búfer CDN transforma el HTML que genera WordPress
 - Formularios completos, sin claves extra; validación inválida conserva la opción
   anterior. Lectura parcial completa valores; corrupción recupera todos los iniciales.
 - Settings API grupo `dctwphero_frontend`, permiso `manage_options`, nonce nativo.
+  Registra `type=array` y callback explícito `DCTWPHero_Frontend_Admin::sanitize`;
+  `tests/modules.php` verifica su conexión y ejecución vía `sanitize_option()`.
   Pestaña disponible desactivado; avisa si `wpo-tweaks/wpo-tweaks.php` está activo.
 
 ## Flujo e invariantes

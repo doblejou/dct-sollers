@@ -41,6 +41,10 @@ def main():
 
     project = Path(__file__).resolve().parents[2]
     print(run(['php', str(project / 'tests/migration/bootstrap-contract.php')]))
+    bootstrap = str(project / 'modules/migration/import-bootstrap.php')
+    for value in ('true', 'false', '"true"'):
+        code = f'define("WP_CLI", {value}); require {json.dumps(bootstrap)}; echo "UNSAFE";'
+        assert run(['php', '-r', code]) == '', 'Definir WP_CLI sin el runtime real no permite arrancar'
     for helper in ('import-bootstrap.php', 'finalize.php', 'verify.php', 'flush-cache.php'):
         assert run(['php', str(project / 'modules/migration' / helper)]) == '', 'Acceso directo sin WordPress ni WP_CLI no ejecuta operaciones'
     temporary = '/tmp/opencode' if os.access('/tmp/opencode', os.W_OK) else tempfile.gettempdir()
@@ -85,7 +89,10 @@ def main():
            '$value["media"] = content_url("/uploads/image.jpg"); '
            'update_option("migration_fixture", $value); '
            '$wpdb->query("CREATE TABLE `{$wpdb->prefix}preserved` (id int) ENGINE=InnoDB"); '
-           '$wpdb->query("INSERT INTO `{$wpdb->prefix}preserved` VALUES (7)");')
+            '$wpdb->query("INSERT INTO `{$wpdb->prefix}preserved` VALUES (7)"); '
+            '$wpdb->query("CREATE TABLE `{$wpdb->prefix}fixture_heap` (value varbinary(50), nullable text NULL, KEY(value)) ENGINE=InnoDB"); '
+            'for ($i = 0; $i < 205; $i++) { '
+            '$wpdb->query("INSERT INTO `{$wpdb->prefix}fixture_heap` VALUES (UNHEX(\'00ff\'), NULL)"); }')
         (content / 'uploads' / 'fixture.txt').write_text('original')
         os.chmod(content / 'uploads/fixture.txt', 0o750)
         os.utime(content / 'uploads/fixture.txt', (1700000000, 1700000000))
@@ -116,6 +123,8 @@ def main():
             manifest = json.loads(package.read('manifest.json'))
             assert manifest['format'] == 'dctwphero'
             assert not any(name.startswith('content/plugins/dctwphero/') for name in package.namelist())
+            heap = package.read('database/fixture_heap.ndjson').splitlines()
+            assert len(heap) == 206 and all(json.loads(row) == ['AP8=', None] for row in heap[1:]), 'Lotes reales conservan 205 filas duplicadas, binarios y NULL sin PK'
         wp('dctwphero', 'export', f'--file={archive}', expected=1)
         wp('dctwphero', 'export', f'--file={content}/bad.zip', expected=1)
         wp('dctwphero', 'import', f'--file={archive}', expected=1)
@@ -167,6 +176,7 @@ def main():
         assert restored['media'] == 'https://target.test/sub/wp/wp-content/uploads/image.jpg'
         assert wp('option', 'get', 'siteurl').strip() == 'https://target.test/sub/wp'
         assert wp('user', 'get', 'testadmin', '--field=ID').strip() == '1'
+        assert wp('eval', 'global $wpdb; echo $wpdb->get_var("SELECT COUNT(*) FROM `{$wpdb->prefix}fixture_heap` WHERE value = UNHEX(\'00ff\') AND nullable IS NULL");').strip() == '205'
         assert wp('eval', 'global $wpdb; echo bin2hex($wpdb->get_var("SELECT value FROM `{$wpdb->prefix}fixture` WHERE id = 1"));').strip() == '00ff'
         assert wp('eval', 'global $wpdb; echo bin2hex($wpdb->get_var("SELECT value FROM `{$wpdb->prefix}fixture` WHERE id = 2"));').strip() == sql_literal.hex(), 'SQL aparente y bytes arbitrarios se importan como datos, no como instrucciones'
         assert wp('eval', 'global $wpdb; $r = $wpdb->get_row("SELECT * FROM `{$wpdb->prefix}fixture` WHERE id = 1"); '
@@ -263,6 +273,9 @@ def main():
                     for script in ('finalize.php', 'verify.php', 'flush-cache.php', 'import-bootstrap.php', 'class-command.php'):
                         with urllib.request.urlopen(f'http://127.0.0.1:{port}/wp-content/plugins/dctwphero/modules/migration/{script}') as response:
                             assert response.read() == b'', f'{script} no es un punto de entrada HTTP'
+                    probe.write_text('<?php define("WP_CLI", true); class WP_CLI {} require __DIR__ . "/wp-content/plugins/dctwphero/modules/migration/import-bootstrap.php"; echo "UNSAFE";')
+                    with urllib.request.urlopen(f'http://127.0.0.1:{port}/migration-probe.php') as response:
+                        assert response.read() == b'', 'El bootstrap rechaza HTTP incluso con WP_CLI definido'
                     print(run(['python3', str(project / 'tests/login/integration.py'), '--wp-path', str(wp_root), '--url', url]))
                 finally:
                     server.terminate()

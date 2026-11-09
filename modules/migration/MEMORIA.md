@@ -39,7 +39,8 @@ Desactivar retira los comandos, no la pestaña informativa ni los datos.
 
 `../../review-notes.txt` se distribuye con el plugin y explica en inglés las
 excepciones puntuales para revisión. No se desactivan sniffs por archivo ni por
-proyecto. El bootstrap anterior a WordPress conserva su guardia real `WP_CLI`,
+proyecto. El bootstrap anterior a WordPress exige SAPI `cli`, `WP_CLI === true`
+y clase `WP_CLI` ya cargada, sin autoload; conserva su guardia real,
 no una comprobación ficticia de `ABSPATH` para complacer el analizador.
 
 ## Interfaz CLI
@@ -79,7 +80,13 @@ wp dctwphero import --file=/ruta/privada/sitio.zip --mode=mirror --yes
    eleva este último a max(original, 86400) y verifica que el servidor lo aplicó.
 3. `Package::create()` exporta tablas y archivos, genera manifiesto e inventario.
    La instantánea InnoDB no es atómica con archivos: evitar escritores concurrentes.
-4. Extraer el ZIP temporal para verificarlo íntegramente; publicar con permiso 0600
+4. La lectura de filas usa `Database::export_rows()`: lotes de 100 con `wpdb`,
+   identificadores `%i` y límites `%d` preparados, misma instantánea de solo lectura
+   y recorrido clustered InnoDB forzado con `USE INDEX ()`, también sin PK.
+   Conserva duplicados, binarios y NULL; OFFSET tiene coste creciente y el límite
+   es de filas, no de bytes. `SHOW COUNT(*) WARNINGS` consulta los avisos tras
+   INSERT/ALTER sin borrarlos; no hay llamadas directas mysqli en Database.
+5. Extraer el ZIP temporal para verificarlo íntegramente; publicar con permiso 0600
    mediante enlace sin sobrescribir el destino. Ejecutar `finish()` siempre.
    `assert_locked()` comprueba conexión original y propietario de GET_LOCK tras
    empaquetar y antes del enlace. Si falla solo la limpieza tras publicar, el error

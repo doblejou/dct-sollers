@@ -28,7 +28,7 @@ final class DCTWPHero_Login_Admin
     {
         $arguments = array();
         $arguments['type'] = 'array';
-        $arguments['sanitize_callback'] = self::sanitize(...);
+        $arguments['sanitize_callback'] = 'DCTWPHero_Login_Admin::sanitize';
         register_setting('dctwphero', 'dctwphero_settings', $arguments);
     }
 

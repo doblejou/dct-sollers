@@ -73,7 +73,9 @@ CDN/origen; el aviso no implica configurar o verificar esas cabeceras.
 ## Administración y comprobación
 
 - Settings API: grupo `dctwphero_cdn`, opción anterior, `manage_options` y nonce
-  nativos. Guardar no contacta con servidores externos.
+  nativos. Guardar no contacta con servidores externos. Registra `type=array` y
+  callback explícito `DCTWPHero_CDN_Admin::sanitize`; `tests/modules.php` comprueba
+  su conexión y ejecución mediante `sanitize_option()`.
 - `admin_post_dctwphero_cdn_check`: solo POST autenticado, `manage_options` y nonce
   `dctwphero_cdn_check`; no existe handler nopriv. Anónimos reciben el rechazo
   nativo de WordPress. Resultados en transient por usuario durante un minuto,

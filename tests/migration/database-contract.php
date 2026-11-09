@@ -250,4 +250,56 @@ foreach (array('release', 'timeout') as $failure)
     });
 }
 
+foreach (array(0, 100, 201) as $count)
+{
+    $responses = array();
+    $expected = array();
+
+    for ($id = 0; $id < $count; $id++)
+    {
+        $row = array();
+        $row['value'] = "\0\xff'\\%s%i";
+        $row['nullable'] = null;
+        $expected[] = $row;
+    }
+
+    for ($offset = 0; $offset <= $count; $offset += 100)
+    {
+        $sql = 'SELECT `value`,`nullable` FROM `fixture_posts` USE INDEX () LIMIT 100 OFFSET ' . $offset;
+        $responses[] = array($sql, array_slice($expected, $offset, 100));
+
+        if ($count - $offset < 100)
+        {
+            break;
+        }
+    }
+
+    DCTWPHero_Migration_Test_Database::run($responses, static function () use ($expected): void
+    {
+        $rows = iterator_to_array(DCTWPHero_Migration_Database::export_rows('fixture_posts', array('value', 'nullable')));
+        $expected = array_map(array_values(...), $expected);
+        DCTWPHero_Checks::that($rows === $expected, 'Exportación por lotes conserva duplicados, binarios y NULL sin clave primaria');
+    });
+}
+
+$responses = array();
+$responses[] = array('SELECT `value` FROM `fixture_posts` USE INDEX () LIMIT 100 OFFSET 0', false);
+DCTWPHero_Migration_Test_Database::run($responses, static function (): void
+{
+    DCTWPHero_Checks::rejects(static fn() => iterator_to_array(DCTWPHero_Migration_Database::export_rows('fixture_posts', array('value'))), 'Propaga errores al leer lotes de exportación');
+    DCTWPHero_Checks::rejects(static fn() => iterator_to_array(DCTWPHero_Migration_Database::export_rows('fixture_posts; DROP TABLE users', array('value'))), 'Rechaza identificadores de tabla antes de leer');
+    DCTWPHero_Checks::rejects(static fn() => iterator_to_array(DCTWPHero_Migration_Database::export_rows('fixture_posts', array('value; SELECT 1'))), 'Rechaza identificadores de columna antes de leer');
+});
+
+foreach (array(0, 1) as $warnings)
+{
+    $responses = array();
+    $responses[] = array('SHOW COUNT(*) WARNINGS', array(array('@@session.warning_count' => $warnings)));
+    DCTWPHero_Migration_Test_Database::run($responses, static function () use ($warnings): void
+    {
+        $method = new ReflectionMethod(DCTWPHero_Migration_Database::class, 'warning_count');
+        DCTWPHero_Checks::that($method->invoke(null) === $warnings, 'Lee avisos SQL mediante wpdb');
+    });
+}
+
 DCTWPHero_Checks::report();

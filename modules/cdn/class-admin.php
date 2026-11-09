@@ -28,7 +28,7 @@ final class DCTWPHero_CDN_Admin
     {
         $arguments = array();
         $arguments['type'] = 'array';
-        $arguments['sanitize_callback'] = self::sanitize(...);
+        $arguments['sanitize_callback'] = 'DCTWPHero_CDN_Admin::sanitize';
         register_setting('dctwphero_cdn', 'dctwphero_cdn_settings', $arguments);
     }
 

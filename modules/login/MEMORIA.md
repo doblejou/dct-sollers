@@ -88,6 +88,8 @@ Invariantes:
 ## Administración
 
 - Permiso `manage_options`. Settings API: grupo `dctwphero`, opción de ajustes anterior.
+  Registra `type=array` y callback explícito `DCTWPHero_Login_Admin::sanitize`.
+  `tests/modules.php` verifica el registro y la ejecución vía `sanitize_option()`.
 - `render()` prepara paginación de 50 bloqueos por página; orden por expiración
   descendente e IP ascendente en el almacén. También prepara el estado del módulo;
   la plantilla no consulta opciones para decidir su aviso de desactivación.

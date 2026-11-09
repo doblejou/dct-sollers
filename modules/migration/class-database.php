@@ -280,44 +280,18 @@ final class DCTWPHero_Migration_Database
                 $header['table'] = $table;
                 $header['schema'] = $schema;
                 $header['columns'] = $columns;
-                $result = null;
 
                 try
                 {
                     self::write($handle, $header);
-                    $sql = 'SELECT ' . implode(',', array_map(self::identifier(...), $columns));
-                    $sql .= ' FROM ' . self::identifier($table);
-                    // wpdb buffers results; use its existing connection for unbuffered streaming. Every identifier above is validated.
-                    // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_query
-                    $result = mysqli_query($wpdb->dbh, $sql, MYSQLI_USE_RESULT);
-
-                    if ($result === false)
+                    foreach (self::export_rows($table, $columns) as $row)
                     {
-                        throw new RuntimeException('No se puede leer una tabla del origen.');
-                    }
-
-                    // Consume the unbuffered result one row at a time, preserving binary data and NULL.
-                    // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_fetch_row
-                    while (($row = mysqli_fetch_row($result)) !== null)
-                    {
-                        if ($row === false)
-                        {
-                            throw new RuntimeException('Lectura incompleta de una tabla del origen.');
-                        }
-
                         $encoded = array_map(static fn(?string $value): ?string => $value === null ? null : base64_encode($value), $row);
                         self::write($handle, $encoded);
                     }
                 }
                 finally
                 {
-                    if ($result instanceof mysqli_result)
-                    {
-                        // Release the unbuffered result before reusing the same wpdb connection.
-                        // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_free_result
-                        mysqli_free_result($result);
-                    }
-
                     // Close the NDJSON stream and treat a failed close as an export failure.
                     // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
                     if (!fclose($handle))
@@ -336,6 +310,62 @@ final class DCTWPHero_Migration_Database
         }
 
         return $inventory;
+    }
+
+    ################################################
+    #
+    #  export_rows
+    #
+    #  Lee lotes con wpdb sin almacenar una tabla completa en memoria.
+    #
+    ################################################
+    public static function export_rows(string $table, array $columns): Generator
+    {
+        global $wpdb;
+        self::identifier($table);
+        $selection = array();
+
+        foreach ($columns as $column)
+        {
+            self::identifier($column);
+            $selection[] = $wpdb->prepare('%i', $column);
+        }
+
+        $offset = 0;
+        $limit = 100;
+
+        do
+        {
+            // A full InnoDB clustered scan in the same read-only snapshot also supports tables without a primary key.
+            // USE INDEX () prevents switching to a covering secondary index between batches.
+            // Column fragments were prepared with %i above; the table and pagination are prepared here.
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+            self::query($wpdb->prepare('SELECT ' . implode(',', $selection) . ' FROM %i USE INDEX () LIMIT %d OFFSET %d', $table, $limit, $offset));
+            $rows = $wpdb->last_result;
+
+            foreach ($rows as $row)
+            {
+                yield array_values((array) $row);
+            }
+
+            $offset += count($rows);
+        }
+        while (count($rows) === $limit);
+    }
+
+    ################################################
+    #
+    #  warning_count
+    #
+    #  Consulta los avisos mediante una sentencia diagnóstica que los conserva.
+    #
+    ################################################
+    private static function warning_count(): int
+    {
+        global $wpdb;
+        self::query('SHOW COUNT(*) WARNINGS');
+
+        return (int) array_values((array) $wpdb->last_result[0])[0];
     }
 
     ################################################
@@ -508,9 +538,7 @@ final class DCTWPHero_Migration_Database
                 {
                     $inserted = self::query($insert . implode(',', $values) . ')');
 
-                    // Check the same connection immediately: SQL warnings must fail before publishing truncated data.
-                    // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_warning_count
-                    if ($inserted !== 1 || mysqli_warning_count($wpdb->dbh) !== 0)
+                    if ($inserted !== 1 || self::warning_count() !== 0)
                     {
                         throw new RuntimeException('Una fila no se ha importado exactamente: conversión SQL con avisos o recuento incorrecto.');
                     }
@@ -543,9 +571,7 @@ final class DCTWPHero_Migration_Database
                         $sql .= ' (' . $key['references'] . ')' . $key['actions'];
                         self::query($sql);
 
-                        // A separate SQL query could reset the warning state on the current connection.
-                        // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_warning_count
-                        if (mysqli_warning_count($wpdb->dbh) !== 0)
+                        if (self::warning_count() !== 0)
                         {
                             throw new RuntimeException('La reconstrucción de una clave externa produjo avisos SQL.');
                         }
