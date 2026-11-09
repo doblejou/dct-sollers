@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Migration_Command
+final class DCTWPSollers_Migration_Command
 {
     ################################################
     #
@@ -12,7 +12,7 @@ final class DCTWPHero_Migration_Command
     #
     ################################################
     /**
-     * Exporta el sitio a un ZIP propio de DCT WP Hero.
+     * Exporta el sitio a un ZIP propio de DCTWP Sollers.
      *
      * ## OPTIONS
      *
@@ -27,7 +27,7 @@ final class DCTWPHero_Migration_Command
      */
     public static function export(array $args, array $options): void
     {
-        $operation = new DCTWPHero_Migration_Operation();
+        $operation = new DCTWPSollers_Migration_Operation();
 
         try
         {
@@ -39,26 +39,26 @@ final class DCTWPHero_Migration_Command
 
             );
             self::arguments($args, $options, $allowed);
-            DCTWPHero_Migration_Package::environment();
+            DCTWPSollers_Migration_Package::environment();
             $output = self::output($options['file']);
-            $excluded = array_values(array_unique(array_merge(DCTWPHero_Migration_Files::exclusions(), self::list($options['exclude'] ?? ''))));
+            $excluded = array_values(array_unique(array_merge(DCTWPSollers_Migration_Files::exclusions(), self::list($options['exclude'] ?? ''))));
 
             foreach ($excluded as $path)
             {
-                DCTWPHero_Migration_Files::path($path);
+                DCTWPSollers_Migration_Files::path($path);
             }
 
             $tables = self::list($options['exclude-tables'] ?? '');
             $directory = $operation->start();
             $temporary = $operation->archive($output);
             WP_CLI::warning('Evita escrituras durante la exportación. La copia no es atómica entre archivos y base de datos.');
-            DCTWPHero_Migration_Package::create($directory, $temporary, $excluded, $tables);
+            DCTWPSollers_Migration_Package::create($directory, $temporary, $excluded, $tables);
             $operation->assert_locked();
             $validation = $directory . '/verification';
 
-            DCTWPHero_Migration_Files::directory($validation, 0700);
+            DCTWPSollers_Migration_Files::directory($validation, 0700);
 
-            DCTWPHero_Migration_Package::extract($temporary, $validation);
+            DCTWPSollers_Migration_Package::extract($temporary, $validation);
             $operation->assert_locked();
 
             // Publish a verified private ZIP without ever replacing an existing target; link() has no overwrite fallback.
@@ -105,7 +105,7 @@ final class DCTWPHero_Migration_Command
      * ## OPTIONS
      *
      * --file=<path>
-     * : Ruta absoluta de un ZIP propio de DCT WP Hero.
+     * : Ruta absoluta de un ZIP propio de DCTWP Sollers.
      *
      * --mode=<mode>
      * : merge conserva archivos y tablas extra; mirror elimina extras no excluidos.
@@ -131,7 +131,7 @@ final class DCTWPHero_Migration_Command
     {
         global $wpdb, $wp_version;
         $maintenance = false;
-        $operation = new DCTWPHero_Migration_Operation();
+        $operation = new DCTWPSollers_Migration_Operation();
         $database = $operation->database();
 
         try
@@ -147,7 +147,7 @@ final class DCTWPHero_Migration_Command
 
             );
             self::arguments($args, $options, $allowed);
-            DCTWPHero_Migration_Package::environment();
+            DCTWPSollers_Migration_Package::environment();
 
             if (($options['mode'] ?? null) !== 'merge' && ($options['mode'] ?? null) !== 'mirror')
             {
@@ -168,14 +168,14 @@ final class DCTWPHero_Migration_Command
 
             if (!isset($options['dry-run']))
             {
-                DCTWPHero_Migration_Process::isolate($options);
+                DCTWPSollers_Migration_Process::isolate($options);
             }
 
-            $target = DCTWPHero_Migration_Package::context();
+            $target = DCTWPSollers_Migration_Package::context();
             $original_site = $target['site'];
             $original_home = $target['home'];
-            $target['home'] = DCTWPHero_Migration_Values::url($options['home-url'] ?? $target['home']);
-            $target['site'] = DCTWPHero_Migration_Values::url($options['site-url'] ?? $target['site']);
+            $target['home'] = DCTWPSollers_Migration_Values::url($options['home-url'] ?? $target['home']);
+            $target['site'] = DCTWPSollers_Migration_Values::url($options['site-url'] ?? $target['site']);
             $original_urls = array();
             $original_urls[$original_site] = $target['site'];
             $original_urls[$original_home] ??= $target['home'];
@@ -195,7 +195,7 @@ final class DCTWPHero_Migration_Command
 
             $directory = $operation->start();
             WP_CLI::log('Validando ZIP, inventario e integridad…');
-            $manifest = DCTWPHero_Migration_Package::extract($file, $directory);
+            $manifest = DCTWPSollers_Migration_Package::extract($file, $directory);
 
             if (version_compare($manifest['context']['wordpress'], $wp_version, '>'))
             {
@@ -207,16 +207,16 @@ final class DCTWPHero_Migration_Command
                 WP_CLI::warning('El origen usa una versión de PHP posterior. Comprueba la compatibilidad de sus plugins.');
             }
 
-            $map = DCTWPHero_Migration_Values::map($manifest['context'], $target);
-            $existing = DCTWPHero_Migration_Database::tables();
+            $map = DCTWPSollers_Migration_Values::map($manifest['context'], $target);
+            $existing = DCTWPSollers_Migration_Database::tables();
 
             foreach ($existing as $table)
             {
-                DCTWPHero_Migration_Database::schema($table);
+                DCTWPSollers_Migration_Database::schema($table);
             }
 
-            $excluded = array_unique(array_merge($manifest['excluded_paths'], DCTWPHero_Migration_Files::exclusions()));
-            $files = DCTWPHero_Migration_Files::plan(WP_CONTENT_DIR, $manifest['entries'], $excluded, $options['mode']);
+            $excluded = array_unique(array_merge($manifest['excluded_paths'], DCTWPSollers_Migration_Files::exclusions()));
+            $files = DCTWPSollers_Migration_Files::plan(WP_CONTENT_DIR, $manifest['entries'], $excluded, $options['mode']);
 
             if (!wp_is_writable(ABSPATH))
             {
@@ -229,8 +229,8 @@ final class DCTWPHero_Migration_Command
             WP_CLI::log('Archivos extra a eliminar: ' . count($files['delete']));
             WP_CLI::log('Directorios extra a eliminar tras vaciarlos: ' . count($files['directories']));
             $included_tables = array_map(static fn(string $suffix): string => $wpdb->prefix . $suffix, array_keys($manifest['tables']));
-            $extra_tables = DCTWPHero_Migration_Database::extra_tables($existing, $included_tables, $manifest['excluded_tables'], $options['mode']);
-            DCTWPHero_Migration_Database::foreign_boundary(array_merge($included_tables, $extra_tables));
+            $extra_tables = DCTWPSollers_Migration_Database::extra_tables($existing, $included_tables, $manifest['excluded_tables'], $options['mode']);
+            DCTWPSollers_Migration_Database::foreign_boundary(array_merge($included_tables, $extra_tables));
             WP_CLI::log('Tablas extra a eliminar: ' . count($extra_tables));
             WP_CLI::log('Modo: ' . $options['mode'] . '; home: ' . $target['home'] . '; site: ' . $target['site']);
 
@@ -272,7 +272,7 @@ final class DCTWPHero_Migration_Command
                 foreach ($files['write'] as $path)
                 {
                     $metadata = $manifest['entries']['content/' . $path];
-                    DCTWPHero_Migration_Files::copy(
+                    DCTWPSollers_Migration_Files::copy(
                         $directory . '/content/' . $path,
                         WP_CONTENT_DIR,
                         $path,
@@ -283,7 +283,7 @@ final class DCTWPHero_Migration_Command
 
                 foreach ($files['delete'] as $path)
                 {
-                    $destination = DCTWPHero_Migration_Files::destination(WP_CONTENT_DIR, $path);
+                    $destination = DCTWPSollers_Migration_Files::destination(WP_CONTENT_DIR, $path);
 
                     // Validated mirror target: detect deletion failure, without wp_delete_file() filters changing the path.
                     // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
@@ -295,7 +295,7 @@ final class DCTWPHero_Migration_Command
 
                 foreach ($files['directories'] as $path)
                 {
-                    DCTWPHero_Migration_Files::remove_directory(WP_CONTENT_DIR, $path);
+                    DCTWPSollers_Migration_Files::remove_directory(WP_CONTENT_DIR, $path);
                 }
 
                 $operation->assert_locked();
@@ -347,7 +347,7 @@ final class DCTWPHero_Migration_Command
     {
         if ($args !== array() || array_diff(array_keys($options), $allowed) !== array())
         {
-            throw new RuntimeException('Argumentos no reconocidos. Consulta wp help dctwphero export/import.');
+            throw new RuntimeException('Argumentos no reconocidos. Consulta wp help dctwpsollers export/import.');
         }
 
         if (!is_string($options['file'] ?? null) || !str_starts_with($options['file'], '/') || str_contains($options['file'], "\0"))

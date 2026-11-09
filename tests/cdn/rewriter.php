@@ -5,11 +5,11 @@ defined('ABSPATH') || exit;
 require_once dirname(__DIR__) . '/checks.php';
 require_once dirname(__DIR__, 2) . '/modules/cdn/class-module.php';
 require_once dirname(__DIR__, 2) . '/modules/cdn/class-rewriter.php';
-$check = DCTWPHero_Checks::that(...);
-$settings = DCTWPHero_CDN_Module::defaults();
+$check = DCTWPSollers_Checks::that(...);
+$settings = DCTWPSollers_CDN_Module::defaults();
 $settings['hostname'] = 'cdn.example.test';
 $settings['exclusions'] = "/private/\nSkip\n0-private";
-$engine = new DCTWPHero_CDN_Rewriter($settings, array('https://example.test/sub', 'http://static.example.test:8080/wp'));
+$engine = new DCTWPSollers_CDN_Rewriter($settings, array('https://example.test/sub', 'http://static.example.test:8080/wp'));
 
 foreach (array('https://example.test', 'http://EXAMPLE.TEST', '//example.test', 'http://static.example.test:8080', '') as $origin)
 {
@@ -57,12 +57,12 @@ foreach (array('&amp;', '&#38;', '&#x26;') as $separator)
 
 $check($engine->rewrite('url(/a.jpg); color:red') === 'url(//cdn.example.test/a.jpg); color:red', 'Conserva delimitadores CSS al admitir entidades HTML');
 $settings['relative'] = 0;
-$engine = new DCTWPHero_CDN_Rewriter($settings, array('https://example.test'));
+$engine = new DCTWPSollers_CDN_Rewriter($settings, array('https://example.test'));
 $check($engine->rewrite('/a.jpg') === '/a.jpg', 'Se puede omitir la reescritura relativa');
 $check($engine->rewrite('//example.test/a.jpg') === '//cdn.example.test/a.jpg', 'La opción relativa no excluye URL sin protocolo');
 $settings['hostname'] = '';
-$check((new DCTWPHero_CDN_Rewriter($settings, array('https://example.test')))->rewrite('/a.jpg') === '/a.jpg', 'Sin dominio no hay reescritura');
+$check((new DCTWPSollers_CDN_Rewriter($settings, array('https://example.test')))->rewrite('/a.jpg') === '/a.jpg', 'Sin dominio no hay reescritura');
 $settings['hostname'] = 'cdn.example.test';
 $settings['extensions'] = '';
-$check((new DCTWPHero_CDN_Rewriter($settings, array('https://example.test')))->rewrite('/a.jpg') === '/a.jpg', 'Sin extensiones no hay reescritura');
-DCTWPHero_Checks::report();
+$check((new DCTWPSollers_CDN_Rewriter($settings, array('https://example.test')))->rewrite('/a.jpg') === '/a.jpg', 'Sin extensiones no hay reescritura');
+DCTWPSollers_Checks::report();

@@ -1,4 +1,4 @@
-# DCT WP Hero
+# DCTWP Sollers
 
 Plugin para WordPress 7.0+ y PHP 8.4+. Sin dependencias externas ni build.
 Sus funcionalidades se organizan en módulos independientes; el primero es la
@@ -8,12 +8,16 @@ Incluye un módulo CDN genérico, desactivado por defecto, sin integración con 
 
 ## Instalación
 
-Copiar `dctwphero.php`, `includes/`, `modules/`, `templates/`, `uninstall.php`,
+DCTWP Sollers se instala como un plugin independiente. No importa ajustes,
+bloqueos ni paquetes de migración del plugin anterior. Desinstalar el plugin
+anterior antes de instalar este; no se incluyen alias ni migraciones entre nombres.
+
+Copiar `dctwpsollers.php`, `includes/`, `modules/`, `templates/`, `uninstall.php`,
 `readme.txt` y `review-notes.txt` a
-`wp-content/plugins/dctwphero/` y activar el plugin. No admite activación en red
+`wp-content/plugins/dctwpsollers/` y activar el plugin. No admite activación en red
 multisite en esta versión: la activación se rechaza en esas instalaciones.
 
-En **Ajustes → DCT WP Hero** se configuran:
+En **Ajustes → DCTWP Sollers** se configuran:
 
 La pantalla utiliza pestañas nativas de WordPress, sin JavaScript ni CSS propios.
 La primera, **Módulos**, contiene únicamente la activación de funcionalidades.
@@ -49,8 +53,8 @@ cadenas). Los valores persistidos inválidos recuperan el valor inicial del mód
 login y migración activos, CDN desactivado, sin alterar otros estados válidos.
 
 Para añadir un módulo, crear `modules/<id>/class-module.php` con un método `register()`
-que conecte sus hooks, cargarla desde `dctwphero.php` y declararla en
-`DCTWPHero::modules()` con etiqueta, descripción, estado inicial y callback de
+que conecte sus hooks, cargarla desde `dctwpsollers.php` y declararla en
+`DCTWPSollers::modules()` con etiqueta, descripción, estado inicial y callback de
 registro, además de callbacks opcionales `admin_register` para conectar su
 administración (incluso desactivado) y `render` para su pantalla de ajustes. El listado
 de administración y las pestañas se generan a partir de ese registro.
@@ -87,7 +91,7 @@ release/              ZIP instalables versionados
 
 ## CDN
 
-Configurar **Ajustes → DCT WP Hero → CDN** y activar después en **Módulos**.
+Configurar **Ajustes → DCTWP Sollers → CDN** y activar después en **Módulos**.
 Está desactivado por defecto, también al actualizar. Necesita un CDN ya configurado
 para servir las mismas rutas del origen; no configura DNS, sube archivos ni purga
 cachés. Desactivar conserva ajustes y deja de reescribir.
@@ -116,7 +120,7 @@ respuestas comprimidas ni tipos distintos de HTML. En REST solo transforma
 raw ni otros campos JSON. El búfer retiene la salida hasta el final y no está
 destinado a streaming.
 
-Los ajustes están en `dctwphero_cdn_settings` mediante Options API; la reescritura
+Los ajustes están en `dctwpsollers_cdn_settings` mediante Options API; la reescritura
 no altera las URL guardadas en la base de datos ni archivos. No procesa referencias
 internas de CSS/JS externos. **Invalidar la caché de página tras cambiar ajustes o
 estado:** el HTML servido sin ejecutar WordPress no puede ser reescrito por el módulo.
@@ -134,7 +138,7 @@ no realiza peticiones externas. Comprobación restringida a POST con nonce y
 Detalles técnicos en `modules/cdn/MEMORIA.md`. Pruebas:
 
 ```sh
-wp --path=/var/www/wpdev4.local --skip-plugins=dctwphero eval-file tests/cdn/rewriter.php
+wp --path=/var/www/wpdev4.local --skip-plugins=dctwpsollers eval-file tests/cdn/rewriter.php
 python3 -B tests/cdn/integration.py --wp-path /var/www/wpdev4.local
 ```
 
@@ -154,10 +158,10 @@ controles de ejecución. No hay endpoints de migración REST/AJAX; la implementa
 `modules/migration/` y sus clases operativas no se cargan mediante HTTP.
 
 ```sh
-wp dctwphero export --file=/ruta/privada/sitio.zip
-wp dctwphero import --file=/ruta/privada/sitio.zip --mode=merge --dry-run
-wp dctwphero import --file=/ruta/privada/sitio.zip --mode=merge
-wp dctwphero import --file=/ruta/privada/sitio.zip --mode=mirror --yes
+wp dctwpsollers export --file=/ruta/privada/sitio.zip
+wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=merge --dry-run
+wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=merge
+wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=mirror --yes
 ```
 
 **Importar sobrescribe datos y no crea copia previa ni garantiza rollback.**
@@ -175,7 +179,7 @@ datos binarios. No necesita los plugins de All-in-One ni Composer.
 
 Incluye las tablas del prefijo del sitio y archivos de `wp-content`, incluidos
 plugins, temas, uploads y mu-plugins. No incluye el núcleo, `wp-config.php` ni
-configuración del servidor. El destino necesita WordPress y DCT WP Hero instalados.
+configuración del servidor. El destino necesita WordPress y DCTWP Sollers instalados.
 Los usuarios y contraseñas importados reemplazan los del destino.
 
 Requiere PHP de 64 bits con `ZipArchive` y `mysqli`; tablas InnoDB sin vistas,
@@ -216,7 +220,7 @@ siguen admitidos y sus archivos usan `0644`.
 Exportación admite listas separadas por comas:
 
 ```sh
-wp dctwphero export --file=/ruta/privada/sitio.zip --exclude=uploads/privado,plugins/ejemplo --exclude-tables=wp_tabla_temporal
+wp dctwpsollers export --file=/ruta/privada/sitio.zip --exclude=uploads/privado,plugins/ejemplo --exclude-tables=wp_tabla_temporal
 ```
 
 Las rutas son relativas a `wp-content`, sin glob, rutas absolutas ni `..`.
@@ -226,7 +230,7 @@ importar, también en modo mirror y al cambiar de prefijo.
 
 Exclusiones predeterminadas: `cache`, `upgrade`, `upgrade-temp-backup`,
 `ai1wm-backups`, `updraft`, `backups`, `debug.log`, `db.php`, `object-cache.php`,
-`advanced-cache.php` y el directorio del propio DCT WP Hero. Las copias de otras
+`advanced-cache.php` y el directorio del propio DCTWP Sollers. Las copias de otras
 herramientas deben excluirse explícitamente. El código instalado del migrador no
 se reemplaza; el plugin permanece activo, pero sus estados de módulos proceden
 de los datos importados.
@@ -253,7 +257,7 @@ El trabajador aislado no se hereda a las verificaciones ni a la limpieza de cach
 El reinicio transparente usa `pcntl_exec` de PHP CLI. Si no está disponible, se
 detiene antes de modificar el sitio y se muestra el comando equivalente con
 `--skip-plugins --skip-themes --require=.../modules/migration/import-bootstrap.php`.
-Ese arranque explícito comprueba también que DCT WP Hero y el módulo estén activos.
+Ese arranque explícito comprueba también que DCTWP Sollers y el módulo estén activos.
 Los filtros que omiten los drop-ins no dependen de funciones auxiliares de
 WordPress: también funcionan con `WP_CACHE=true`, antes de que esas funciones
 estén disponibles.
@@ -310,8 +314,8 @@ límite comercial de tamaño; el manifiesto se limita a 64 MiB para validación 
 
 ## Actualizaciones y migraciones
 
-Para distribuir el plugin, crear un ZIP con la carpeta `dctwphero/` que contenga
-`dctwphero.php`, `includes/`, `modules/`, `templates/`, `uninstall.php`, `readme.txt`
+Para distribuir el plugin, crear un ZIP con la carpeta `dctwpsollers/` que contenga
+`dctwpsollers.php`, `includes/`, `modules/`, `templates/`, `uninstall.php`, `readme.txt`
 y `review-notes.txt`.
 Excluir pruebas, reglas, releases anteriores y memorias técnicas `MEMORIA.md`. Subirlo desde
 **Plugins → Añadir plugin → Subir plugin**. Para actualizar, subir el nuevo ZIP
@@ -330,6 +334,10 @@ wp --path=/var/www/wpdev4.local plugin check "$PWD" --exclude-directories=tests,
 ```
 
 Plugin Check no sustituye la revisión de seguridad ni las pruebas funcionales.
+El directorio comprobado debe llamarse `dctwpsollers`, igual que el dominio de
+traducción. Para otros nombres de worktree o para un worktree con `.git` como
+archivo, comprobar una copia del contenido distribuible dentro de una carpeta
+`dctwpsollers`, sin los archivos de desarrollo ni el archivo `.git` del worktree.
 El bootstrap CLI de migración se carga antes de definir `ABSPATH`: su guardia
 `PHP_SAPI === 'cli'`, `WP_CLI === true` y clase `WP_CLI` ya cargada es intencionada.
 No añadir una exigencia de `ABSPATH` a ese archivo.
@@ -350,12 +358,12 @@ Hacer una copia de seguridad antes de actualizar y probar primero en un entorno
 de pruebas. Desinstalar elimina los datos; sustituir los archivos no los elimina.
 
 La versión del plugin y la del esquema son independientes. La opción
-`dctwphero_db_version` guarda el último paso completado. En la activación y en
+`dctwpsollers_db_version` guarda el último paso completado. En la activación y en
 `plugins_loaded` se ejecutan los pasos pendientes antes de usar el almacenamiento.
 La migración 1 crea o adapta la tabla existente mediante `dbDelta()` sin borrar
 filas. Las instalaciones anteriores sin esta opción parten de la versión 0.
 
-Para futuros cambios, aumentar `DCTWPHero_Store::DB_VERSION` y añadir el siguiente
+Para futuros cambios, aumentar `DCTWPSollers_Store::DB_VERSION` y añadir el siguiente
 caso en `upgrade()`. Mantener los pasos anteriores para admitir saltos de versión.
 Cada paso debe ser reejecutable y comprobar su resultado; usar SQL explícito para
 renombrados, eliminaciones o transformaciones que `dbDelta()` no resuelva. No
@@ -394,7 +402,7 @@ tarea periódica. Un administrador bloqueado puede entrar desde otra IP o utiliz
 WP-CLI para desbloquear:
 
 ```sh
-wp eval 'DCTWPHero_Store::unlock("192.0.2.10");'
+wp eval 'DCTWPSollers_Store::unlock("192.0.2.10");'
 ```
 
 No sustituye una protección de servidor/WAF frente a ataques distribuidos. Si la

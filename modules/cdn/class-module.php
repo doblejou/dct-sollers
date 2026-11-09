@@ -2,9 +2,9 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_CDN_Module
+final class DCTWPSollers_CDN_Module
 {
-    private static ?DCTWPHero_CDN_Rewriter $rewriter = null;
+    private static ?DCTWPSollers_CDN_Rewriter $rewriter = null;
     private static bool $buffering = false;
     private static string $pending = '';
 
@@ -113,7 +113,7 @@ final class DCTWPHero_CDN_Module
     ################################################
     public static function settings(): array
     {
-        $saved = get_option('dctwphero_cdn_settings', array());
+        $saved = get_option('dctwpsollers_cdn_settings', array());
 
         return is_array($saved) ? (self::validate_settings(array_replace(self::defaults(), $saved)) ?? self::defaults()) : self::defaults();
     }
@@ -143,9 +143,9 @@ final class DCTWPHero_CDN_Module
     #  Construye una sola instancia por petición con los orígenes de WordPress.
     #
     ################################################
-    private static function rewriter(): DCTWPHero_CDN_Rewriter
+    private static function rewriter(): DCTWPSollers_CDN_Rewriter
     {
-        return self::$rewriter ??= new DCTWPHero_CDN_Rewriter(self::settings(), array(home_url(), site_url()));
+        return self::$rewriter ??= new DCTWPSollers_CDN_Rewriter(self::settings(), array(home_url(), site_url()));
     }
 
     ################################################

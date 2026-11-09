@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Migration_Process
+final class DCTWPSollers_Migration_Process
 {
     ################################################
     #
@@ -13,7 +13,7 @@ final class DCTWPHero_Migration_Process
     ################################################
     public static function isolate(array $options): void
     {
-        if (defined('DCTWPHERO_MIGRATION_ISOLATED') && DCTWPHERO_MIGRATION_ISOLATED)
+        if (defined('DCTWPSOLLERS_MIGRATION_ISOLATED') && DCTWPSOLLERS_MIGRATION_ISOLATED)
         {
             self::assert_isolated();
 
@@ -28,7 +28,7 @@ final class DCTWPHero_Migration_Process
             '--skip-themes',
             '--skip-packages',
             '--require=' . __DIR__ . '/import-bootstrap.php',
-            'dctwphero',
+            'dctwpsollers',
             'import',
 
         );

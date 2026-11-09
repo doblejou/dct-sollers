@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Migration_Database
+final class DCTWPSollers_Migration_Database
 {
     private array $staged = array();
     private array $retired = array();
@@ -514,7 +514,7 @@ final class DCTWPHero_Migration_Database
                 {
                     if ($value !== null)
                     {
-                        $value = DCTWPHero_Migration_Values::replace($value, $map);
+                        $value = DCTWPSollers_Migration_Values::replace($value, $map);
 
                         $role_key = $suffix === 'options' && $columns[$column] === 'option_name'
                             && $value === $manifest['prefix'] . 'user_roles';

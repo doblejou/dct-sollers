@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Store
+final class DCTWPSollers_Store
 {
     public const DB_VERSION = 1;
 
@@ -17,30 +17,30 @@ final class DCTWPHero_Store
     {
         global $wpdb;
 
-        $version = (int) get_option('dctwphero_db_version', 0);
+        $version = (int) get_option('dctwpsollers_db_version', 0);
 
         if ($version === self::DB_VERSION)
         {
             return true;
         }
 
-        $lock = 'dctwphero_' . md5(DB_NAME . ':' . self::table());
+        $lock = 'dctwpsollers_' . md5(DB_NAME . ':' . self::table());
 
         if ((int) $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 10)', $lock)) !== 1)
         {
-            error_log('DCT WP Hero: no se ha podido obtener el bloqueo de migración.');
+            error_log('DCTWP Sollers: no se ha podido obtener el bloqueo de migración.');
             return false;
         }
 
         try
         {
-            wp_cache_delete('dctwphero_db_version', 'options');
+            wp_cache_delete('dctwpsollers_db_version', 'options');
             wp_cache_delete('notoptions', 'options');
-            $version = (int) get_option('dctwphero_db_version', 0);
+            $version = (int) get_option('dctwpsollers_db_version', 0);
 
             if ($version > self::DB_VERSION)
             {
-                error_log('DCT WP Hero: el esquema es más reciente que el código; no se admite downgrade.');
+                error_log('DCTWP Sollers: el esquema es más reciente que el código; no se admite downgrade.');
                 return false;
             }
 
@@ -60,13 +60,13 @@ final class DCTWPHero_Store
 
                 if (!$success)
                 {
-                    error_log('DCT WP Hero: ha fallado la migración de esquema ' . $next . '.');
+                    error_log('DCTWP Sollers: ha fallado la migración de esquema ' . $next . '.');
                     return false;
                 }
 
-                if (!update_option('dctwphero_db_version', $next, false))
+                if (!update_option('dctwpsollers_db_version', $next, false))
                 {
-                    error_log('DCT WP Hero: no se ha podido guardar la versión del esquema.');
+                    error_log('DCTWP Sollers: no se ha podido guardar la versión del esquema.');
                     return false;
                 }
 
@@ -92,7 +92,7 @@ final class DCTWPHero_Store
     {
         global $wpdb;
 
-        return $wpdb->prefix . 'dctwphero_ips';
+        return $wpdb->prefix . 'dctwpsollers_ips';
     }
 
     ################################################
@@ -342,7 +342,7 @@ final class DCTWPHero_Store
     {
         global $wpdb;
 
-        $settings = DCTWPHero::settings();
+        $settings = DCTWPSollers::settings();
         $now = time();
         $wpdb->query($wpdb->prepare(
             'DELETE FROM %i WHERE blocked_until <= %d AND updated_at < %d',

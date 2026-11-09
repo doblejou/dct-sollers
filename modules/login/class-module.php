@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Login_Module
+final class DCTWPSollers_Login_Module
 {
     ################################################
     #
@@ -18,7 +18,7 @@ final class DCTWPHero_Login_Module
         $defaults['window'] = 1;
         $defaults['duration'] = 15;
 
-        $saved = get_option('dctwphero_settings', array());
+        $saved = get_option('dctwpsollers_settings', array());
 
         return self::validate_settings(is_array($saved) ? array_replace($defaults, $saved) : null) ?? $defaults;
     }
@@ -108,7 +108,7 @@ final class DCTWPHero_Login_Module
     ################################################
     public static function check_access(): void
     {
-        if (!DCTWPHero::module_enabled('login'))
+        if (!DCTWPSollers::module_enabled('login'))
         {
             return;
         }
@@ -117,15 +117,15 @@ final class DCTWPHero_Login_Module
 
         if ($ip === '')
         {
-            wp_die(esc_html__('No se puede identificar la dirección del cliente.', 'dctwphero'), '', 403);
+            wp_die(esc_html__('No se puede identificar la dirección del cliente.', 'dctwpsollers'), '', 403);
         }
 
-        if (DCTWPHero_Store::blocked_until($ip) > time())
+        if (DCTWPSollers_Store::blocked_until($ip) > time())
         {
             nocache_headers();
             wp_die(
-                esc_html__('Acceso temporalmente bloqueado. Inténtalo más tarde.', 'dctwphero'),
-                esc_html__('Acceso denegado', 'dctwphero'),
+                esc_html__('Acceso temporalmente bloqueado. Inténtalo más tarde.', 'dctwpsollers'),
+                esc_html__('Acceso denegado', 'dctwpsollers'),
                 403
             );
         }
@@ -142,16 +142,16 @@ final class DCTWPHero_Login_Module
     {
         global $pagenow;
 
-        if (!DCTWPHero::module_enabled('login') || $pagenow !== 'wp-login.php' || !did_action('login_init'))
+        if (!DCTWPSollers::module_enabled('login') || $pagenow !== 'wp-login.php' || !did_action('login_init'))
         {
             return;
         }
 
         $ip = self::client_ip();
 
-        if ($ip !== '' && !DCTWPHero_Store::record_failure($ip, self::settings()))
+        if ($ip !== '' && !DCTWPSollers_Store::record_failure($ip, self::settings()))
         {
-            error_log('DCT WP Hero: no se ha podido registrar un fallo de autenticación.');
+            error_log('DCTWP Sollers: no se ha podido registrar un fallo de autenticación.');
         }
     }
 }

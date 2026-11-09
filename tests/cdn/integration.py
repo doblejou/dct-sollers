@@ -35,7 +35,7 @@ def main():
     if not arguments.http_host.endswith('.local') or socket.gethostbyname(arguments.http_host) != '127.0.0.1':
         parser.error('--http-host debe ser un host .local que resuelva a 127.0.0.1')
     temporary = '/tmp/opencode' if os.access('/tmp/opencode', os.W_OK) else tempfile.gettempdir()
-    fixture = Path(tempfile.mkdtemp(prefix='dct-migration-test-', dir=temporary))
+    fixture = Path(tempfile.mkdtemp(prefix='dctwpsollers-migration-test-', dir=temporary))
     root = fixture / 'wordpress'
     root.mkdir()
     ready = []
@@ -51,7 +51,7 @@ def main():
             if file.name != 'wp-config.php':
                 shutil.copy2(file, root / file.name)
         content = root / 'wp-content'
-        shutil.copytree(project, content / 'plugins/dctwphero', ignore=shutil.ignore_patterns('.ai-rules', 'release', '__pycache__'))
+        shutil.copytree(project, content / 'plugins/dctwpsollers', ignore=shutil.ignore_patterns('.ai-rules', 'release', '__pycache__'))
         theme = content / 'themes/cdn-fixture'
         theme.mkdir(parents=True)
         (theme / 'style.css').write_text('/* Theme Name: CDN Fixture */')
@@ -66,12 +66,12 @@ def main():
         password = secrets.token_hex(20)
         wp('core', 'install', '--url=' + url, '--title=CDN Test', '--admin_user=cdnadmin',
            '--admin_email=test@example.test', '--admin_password=' + password, '--skip-email')
-        wp('plugin', 'activate', 'dctwphero')
+        wp('plugin', 'activate', 'dctwpsollers')
         wp('theme', 'activate', 'cdn-fixture')
         for script in ('modules.php', 'cdn/settings.php', 'cdn/admin.php'):
             print(wp('eval-file', str(project / 'tests' / script)))
-        wp('eval', '$s = DCTWPHero_CDN_Module::defaults(); $s["hostname"] = "cdn.example.test"; '
-           '$s["exclusions"] = "/private/"; update_option("dctwphero_cdn_settings", $s);')
+        wp('eval', '$s = DCTWPSollers_CDN_Module::defaults(); $s["hostname"] = "cdn.example.test"; '
+           '$s["exclusions"] = "/private/"; update_option("dctwpsollers_cdn_settings", $s);')
         post = wp('post', 'create', '--post_status=publish', '--post_title=CDN',
                   '--post_content=<img src="/rest.jpg">', '--porcelain')
         with (fixture / 'server.log').open('w') as log:
@@ -95,7 +95,7 @@ def main():
                     return error.code, error.read().decode(), error.headers
 
             assert 'cdn.example.test' not in request()[1], 'Desactivado no reescribe'
-            wp('eval', '$m = get_option("dctwphero_modules", array()); $m["cdn"] = 1; update_option("dctwphero_modules", $m);')
+            wp('eval', '$m = get_option("dctwpsollers_modules", array()); $m["cdn"] = 1; update_option("dctwpsollers_modules", $m);')
             status, body, headers = request()
             assert status == 200 and 'http://cdn.example.test/wp-content/uploads/cdn-fixture.jpg' in body
             assert '//cdn.example.test/first.jpg 1x' in body and '//cdn.example.test/font.woff2' in body
@@ -110,50 +110,50 @@ def main():
             data = json.loads(body)
             assert status == 200 and '//cdn.example.test/rest.jpg' in data['content']['rendered']
             assert data['link'].startswith(url), 'REST no reescribe enlaces ajenos al contenido'
-            assert request('/wp-admin/admin-post.php?action=dctwphero_cdn_check')[0] in (400, 403)
-            assert request('/wp-admin/admin-post.php', data={'action': 'dctwphero_cdn_check'})[0] in (400, 403)
+            assert request('/wp-admin/admin-post.php?action=dctwpsollers_cdn_check')[0] in (400, 403)
+            assert request('/wp-admin/admin-post.php', data={'action': 'dctwpsollers_cdn_check'})[0] in (400, 403)
             request('/wp-login.php', opener=admin)
             status, _, _ = request('/wp-login.php', data={'log': 'cdnadmin', 'pwd': password, 'testcookie': '1'}, opener=admin)
             assert status == 200
-            admin_path = '/wp-admin/options-general.php?page=dctwphero&tab=cdn'
+            admin_path = '/wp-admin/options-general.php?page=dctwpsollers&tab=cdn'
             status, body, _ = request(admin_path, opener=admin)
             assert status == 200 and 'Access-Control-Allow-Origin' in body and '.woff2' in body
             assert 'cdn.example.test/wp-admin' not in body, 'Administración intacta'
             forms = re.findall(r'<form\b[^>]*>.*?</form>', body, re.S)
-            settings_form = next(form for form in forms if 'dctwphero_cdn_settings[hostname]' in form)
+            settings_form = next(form for form in forms if 'dctwpsollers_cdn_settings[hostname]' in form)
             nonce = re.search(r'name="_wpnonce" value="([^"]+)"', settings_form).group(1)
-            values = {'option_page': 'dctwphero_cdn', 'action': 'update', '_wpnonce': 'invalid',
-                      '_wp_http_referer': admin_path, 'dctwphero_cdn_settings[hostname]': 'saved.example.test',
-                      'dctwphero_cdn_settings[extensions]': '.jpg\n.woff\n.woff2',
-                      'dctwphero_cdn_settings[exclusions]': '/private/', 'dctwphero_cdn_settings[relative]': '1'}
+            values = {'option_page': 'dctwpsollers_cdn', 'action': 'update', '_wpnonce': 'invalid',
+                      '_wp_http_referer': admin_path, 'dctwpsollers_cdn_settings[hostname]': 'saved.example.test',
+                      'dctwpsollers_cdn_settings[extensions]': '.jpg\n.woff\n.woff2',
+                      'dctwpsollers_cdn_settings[exclusions]': '/private/', 'dctwpsollers_cdn_settings[relative]': '1'}
             assert request('/wp-admin/options.php', data=values, opener=admin)[0] == 403
             values['_wpnonce'] = nonce
             assert request('/wp-admin/options.php', data=values, opener=admin)[0] == 200
-            assert wp('eval', 'echo DCTWPHero_CDN_Module::settings()["hostname"];') == 'saved.example.test'
-            values['dctwphero_cdn_settings[hostname]'] = 'https://invalid.example.test/path'
+            assert wp('eval', 'echo DCTWPSollers_CDN_Module::settings()["hostname"];') == 'saved.example.test'
+            values['dctwpsollers_cdn_settings[hostname]'] = 'https://invalid.example.test/path'
             assert request('/wp-admin/options.php', data=values, opener=admin)[0] == 200
-            assert wp('eval', 'echo DCTWPHero_CDN_Module::settings()["hostname"];') == 'saved.example.test'
-            assert request('/wp-admin/admin-post.php', data={'action': 'dctwphero_cdn_check', '_wpnonce': 'invalid'}, opener=admin)[0] == 403
+            assert wp('eval', 'echo DCTWPSollers_CDN_Module::settings()["hostname"];') == 'saved.example.test'
+            assert request('/wp-admin/admin-post.php', data={'action': 'dctwpsollers_cdn_check', '_wpnonce': 'invalid'}, opener=admin)[0] == 403
             # La comprobación autorizada usa dominio vacío: verifica el flujo sin salir a Internet.
-            wp('eval', '$s = DCTWPHero_CDN_Module::settings(); $s["hostname"] = ""; update_option("dctwphero_cdn_settings", $s);')
-            check_form = next(form for form in forms if 'dctwphero_cdn_check' in form)
+            wp('eval', '$s = DCTWPSollers_CDN_Module::settings(); $s["hostname"] = ""; update_option("dctwpsollers_cdn_settings", $s);')
+            check_form = next(form for form in forms if 'dctwpsollers_cdn_check' in form)
             check_nonce = re.search(r'name="_wpnonce" value="([^"]+)"', check_form).group(1)
-            status, checked, _ = request('/wp-admin/admin-post.php', data={'action': 'dctwphero_cdn_check', '_wpnonce': check_nonce}, opener=admin)
+            status, checked, _ = request('/wp-admin/admin-post.php', data={'action': 'dctwpsollers_cdn_check', '_wpnonce': check_nonce}, opener=admin)
             assert status == 200 and 'Guarda primero un dominio CDN válido' in checked
-            assert wp('eval', 'echo DCTWPHero_CDN_Module::settings()["hostname"];') == ''
-            wp('eval', '$s = DCTWPHero_CDN_Module::settings(); $s["hostname"] = "saved.example.test"; update_option("dctwphero_cdn_settings", $s);')
+            assert wp('eval', 'echo DCTWPSollers_CDN_Module::settings()["hostname"];') == ''
+            wp('eval', '$s = DCTWPSollers_CDN_Module::settings(); $s["hostname"] = "saved.example.test"; update_option("dctwpsollers_cdn_settings", $s);')
             wp('user', 'create', 'cdnsubscriber', 'subscriber@example.test', '--role=subscriber', '--user_pass=' + password)
             subscriber = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
             request('/wp-login.php', opener=subscriber)
             request('/wp-login.php', data={'log': 'cdnsubscriber', 'pwd': password, 'testcookie': '1'}, opener=subscriber)
             assert request(admin_path, opener=subscriber)[0] == 403
             assert request('/wp-admin/options.php', data=values, opener=subscriber)[0] == 403
-            assert request('/wp-admin/admin-post.php', data={'action': 'dctwphero_cdn_check'}, opener=subscriber)[0] == 403
-            wp('eval', '$m = get_option("dctwphero_modules", array()); $m["cdn"] = 0; update_option("dctwphero_modules", $m);')
+            assert request('/wp-admin/admin-post.php', data={'action': 'dctwpsollers_cdn_check'}, opener=subscriber)[0] == 403
+            wp('eval', '$m = get_option("dctwpsollers_modules", array()); $m["cdn"] = 0; update_option("dctwpsollers_modules", $m);')
             assert 'saved.example.test' not in request()[1]
             assert 'El módulo CDN está desactivado' in request(admin_path, opener=admin)[1]
             assert 'cdn.example.test' not in request(rest_path)[1], 'REST sin módulo queda intacto'
-            assert wp('eval', 'echo DCTWPHero_CDN_Module::settings()["hostname"];') == 'saved.example.test'
+            assert wp('eval', 'echo DCTWPSollers_CDN_Module::settings()["hostname"];') == 'saved.example.test'
             # Regresión general sobre la misma instalación desechable.
             print(run(['python3', str(project / 'tests/login/integration.py'), '--wp-path', str(root), '--url', url]))
         print('OK: CDN HTML/REST, fuentes, exclusiones, contextos omitidos, permisos, nonce, persistencia y desactivación.')

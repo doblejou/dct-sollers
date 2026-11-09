@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Migration_Admin
+final class DCTWPSollers_Migration_Admin
 {
     ################################################
     #
@@ -15,10 +15,10 @@ final class DCTWPHero_Migration_Admin
     {
         if (!current_user_can('manage_options'))
         {
-            wp_die(esc_html__('No tienes permisos.', 'dctwphero'), '', 403);
+            wp_die(esc_html__('No tienes permisos.', 'dctwpsollers'), '', 403);
         }
 
-        $enabled = DCTWPHero::module_enabled('migration');
+        $enabled = DCTWPSollers::module_enabled('migration');
 
         require __DIR__ . '/templates/usage.php';
     }

@@ -1,20 +1,26 @@
 <?php
 // Ejecutar con wp eval-file tests/modules.php solo en un WordPress de pruebas.
 
-$saved = get_option('dctwphero_modules', null);
+$saved = get_option('dctwpsollers_modules', null);
 require_once __DIR__ . '/checks.php';
-$check = DCTWPHero_Checks::that(...);
+require_once ABSPATH . 'wp-admin/includes/plugin.php';
+$check = DCTWPSollers_Checks::that(...);
 
 try
 {
-    $registrations = array();
-    $registrations['dctwphero_modules'] = 'DCTWPHero_Admin';
-    $registrations['dctwphero_settings'] = 'DCTWPHero_Login_Admin';
-    $registrations['dctwphero_cdn_settings'] = 'DCTWPHero_CDN_Admin';
+    $identity = get_plugin_data(dirname(__DIR__) . '/dctwpsollers.php', false, false);
+    $check($identity['Name'] === 'DCTWP Sollers', 'La cabecera declara la nueva identidad pública');
+    $check($identity['TextDomain'] === 'dctwpsollers', 'El dominio de traducción coincide con el slug');
+    $check(DCTWPSollers_Store::table() === $GLOBALS['wpdb']->prefix . 'dctwpsollers_ips', 'El almacén utiliza la tabla de la nueva identidad');
 
-    if (class_exists('DCTWPHero_Frontend_Admin'))
+    $registrations = array();
+    $registrations['dctwpsollers_modules'] = 'DCTWPSollers_Admin';
+    $registrations['dctwpsollers_settings'] = 'DCTWPSollers_Login_Admin';
+    $registrations['dctwpsollers_cdn_settings'] = 'DCTWPSollers_CDN_Admin';
+
+    if (class_exists('DCTWPSollers_Frontend_Admin'))
     {
-        $registrations['dctwphero_frontend_settings'] = 'DCTWPHero_Frontend_Admin';
+        $registrations['dctwpsollers_frontend_settings'] = 'DCTWPSollers_Frontend_Admin';
     }
 
     foreach ($registrations as $option => $class)
@@ -30,25 +36,25 @@ try
         unregister_setting($registered['group'], $option);
     }
 
-    delete_option('dctwphero_modules');
-    $check(DCTWPHero::module_enabled('login'), 'Instalaciones sin opción mantienen la protección activa');
-    $check(DCTWPHero::module_enabled('migration'), 'Migración activa por defecto');
-    $check(!DCTWPHero::module_enabled('cdn'), 'CDN desactivado por defecto');
-    $check(!DCTWPHero::module_enabled('unknown'), 'Módulos desconocidos no se activan');
+    delete_option('dctwpsollers_modules');
+    $check(DCTWPSollers::module_enabled('login'), 'Instalaciones sin opción mantienen la protección activa');
+    $check(DCTWPSollers::module_enabled('migration'), 'Migración activa por defecto');
+    $check(!DCTWPSollers::module_enabled('cdn'), 'CDN desactivado por defecto');
+    $check(!DCTWPSollers::module_enabled('unknown'), 'Módulos desconocidos no se activan');
     $legacy = array();
     $legacy['login'] = 0;
-    update_option('dctwphero_modules', $legacy);
-    $check(DCTWPHero::module_enabled('migration'), 'Actualización con módulos anteriores activa migración por defecto');
-    $check(!DCTWPHero::module_enabled('login'), 'Actualización conserva el estado anterior del login');
-    $check(!DCTWPHero::module_enabled('cdn'), 'Actualización no activa CDN automáticamente');
+    update_option('dctwpsollers_modules', $legacy);
+    $check(DCTWPSollers::module_enabled('migration'), 'Actualización con módulos anteriores activa migración por defecto');
+    $check(!DCTWPSollers::module_enabled('login'), 'Actualización conserva el estado anterior del login');
+    $check(!DCTWPSollers::module_enabled('cdn'), 'Actualización no activa CDN automáticamente');
     $disabled = array();
     $disabled['login'] = '0';
     $disabled['migration'] = '1';
     $disabled['cdn'] = '0';
-    $validated = DCTWPHero_Admin::sanitize_modules($disabled);
+    $validated = DCTWPSollers_Admin::sanitize_modules($disabled);
     $check($validated['login'] === 0, 'Valida el estado desactivado');
-    update_option('dctwphero_modules', $validated);
-    $check(!DCTWPHero::module_enabled('login'), 'Lee el estado desactivado');
+    update_option('dctwpsollers_modules', $validated);
+    $check(!DCTWPSollers::module_enabled('login'), 'Lee el estado desactivado');
 
     $invalids = array
     (
@@ -68,17 +74,17 @@ try
 
     foreach ($invalids as $input)
     {
-        $check(DCTWPHero_Admin::sanitize_modules($input) === $validated, 'Entrada inválida conserva el estado anterior');
+        $check(DCTWPSollers_Admin::sanitize_modules($input) === $validated, 'Entrada inválida conserva el estado anterior');
     }
 
     $enabled = array();
     $enabled['login'] = '1';
     $enabled['migration'] = '1';
     $enabled['cdn'] = '1';
-    $result = DCTWPHero_Admin::sanitize_modules($enabled);
+    $result = DCTWPSollers_Admin::sanitize_modules($enabled);
     $check($result['login'] === 1, 'Valida la reactivación');
     $check($result['cdn'] === 1, 'Valida activación explícita del CDN');
-    $check(DCTWPHero_Admin::sanitize_modules($result) === $result, 'Validación reejecutable');
+    $check(DCTWPSollers_Admin::sanitize_modules($result) === $result, 'Validación reejecutable');
 
     foreach (array(0, 1, '0', '1') as $login)
     {
@@ -94,7 +100,7 @@ try
                 $expected['login'] = (int) $login;
                 $expected['migration'] = (int) $migration;
                 $expected['cdn'] = (int) $cdn;
-                $check(DCTWPHero_Admin::sanitize_modules($input) === $expected, 'Combinación válida de estados');
+                $check(DCTWPSollers_Admin::sanitize_modules($input) === $expected, 'Combinación válida de estados');
             }
         }
     }
@@ -103,12 +109,12 @@ try
     {
         $input = $result;
         $input['migration'] = $value;
-        $check(DCTWPHero_Admin::sanitize_modules($input) === $validated, 'Rechaza tipos de estado inválidos');
+        $check(DCTWPSollers_Admin::sanitize_modules($input) === $validated, 'Rechaza tipos de estado inválidos');
     }
 
     $input = $result;
     $input['unknown'] = '1';
-    $check(DCTWPHero_Admin::sanitize_modules($input) === $validated, 'Rechaza módulos desconocidos con estados completos');
+    $check(DCTWPSollers_Admin::sanitize_modules($input) === $validated, 'Rechaza módulos desconocidos con estados completos');
 
     foreach (array('invalid', true, false, 2, -1, 1.0, array(), new stdClass()) as $value)
     {
@@ -116,29 +122,29 @@ try
         $corrupt['login'] = $value;
         $corrupt['migration'] = '0';
         $corrupt['cdn'] = $value;
-        update_option('dctwphero_modules', $corrupt);
-        $states = DCTWPHero::module_states();
+        update_option('dctwpsollers_modules', $corrupt);
+        $states = DCTWPSollers::module_states();
         $check($states['login'] === 1 && $states['cdn'] === 0, 'Estados persistidos inválidos usan el valor inicial de cada módulo');
         $check($states['migration'] === 0, 'Un estado corrupto no pierde otros estados válidos');
-        $check(DCTWPHero_Admin::sanitize_modules(null) === $states, 'Formulario inválido reutiliza la lectura normalizada');
+        $check(DCTWPSollers_Admin::sanitize_modules(null) === $states, 'Formulario inválido reutiliza la lectura normalizada');
     }
 
     foreach (array('invalid', 1, new stdClass()) as $corrupt)
     {
-        update_option('dctwphero_modules', $corrupt);
-        $check(DCTWPHero::module_enabled('login') && !DCTWPHero::module_enabled('cdn'), 'Opción de módulos no matricial recupera valores seguros');
+        update_option('dctwpsollers_modules', $corrupt);
+        $check(DCTWPSollers::module_enabled('login') && !DCTWPSollers::module_enabled('cdn'), 'Opción de módulos no matricial recupera valores seguros');
     }
 
-    DCTWPHero_Checks::report();
+    DCTWPSollers_Checks::report();
 }
 finally
 {
     if ($saved === null)
     {
-        delete_option('dctwphero_modules');
+        delete_option('dctwpsollers_modules');
     }
     else
     {
-        update_option('dctwphero_modules', $saved);
+        update_option('dctwpsollers_modules', $saved);
     }
 }

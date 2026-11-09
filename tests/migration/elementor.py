@@ -18,7 +18,7 @@ def cache_scenarios(wp, wp_root, source, archive, fixture):
     css = wp_root / 'wp-content/uploads/elementor/css/post-1.css'
     css.parent.mkdir(parents=True, exist_ok=True)
     css.write_text('/* old generated CSS */')
-    script = wp_root / 'wp-content/plugins/dctwphero/modules/migration/flush-cache.php'
+    script = wp_root / 'wp-content/plugins/dctwpsollers/modules/migration/flush-cache.php'
     try:
         output = wp('eval-file', str(script))
         assert 'omitida' in output and css.exists(), 'No activa Elementor instalado pero desactivado'
@@ -46,7 +46,7 @@ def cache_scenarios(wp, wp_root, source, archive, fixture):
         package = fixture / 'elementor-active.zip'
         rewrite_package(archive, package, enable_elementor)
         css.write_text('/* old generated CSS */')
-        output = wp('dctwphero', 'import', f'--file={package}', '--mode=merge', '--yes')
+        output = wp('dctwpsollers', 'import', f'--file={package}', '--mode=merge', '--yes')
         assert 'Caché CSS de Elementor limpiada' in output
         assert 'Caché de objetos de WordPress limpiada' in output
         assert not css.exists(), 'El CSS anterior se invalida'
@@ -54,15 +54,15 @@ def cache_scenarios(wp, wp_root, source, archive, fixture):
 
         failing = fixture / 'elementor-failure.zip'
         entry = 'content/mu-plugins/dct-elementor-cache-failure.php'
-        payload = b'<?php add_action("elementor/core/files/clear_cache", static function() { if (class_exists("DCTWPHero_Migration_Cache", false)) { throw new RuntimeException("Cache fixture failure"); } });'
+        payload = b'<?php add_action("elementor/core/files/clear_cache", static function() { if (class_exists("DCTWPSollers_Migration_Cache", false)) { throw new RuntimeException("Cache fixture failure"); } });'
         rewrite_package(package, failing, lambda manifest, files: set_entry(manifest, files, entry, payload))
-        output = wp('dctwphero', 'import', f'--file={failing}', '--mode=merge', '--yes', expected=1)
+        output = wp('dctwpsollers', 'import', f'--file={failing}', '--mode=merge', '--yes', expected=1)
         assert 'flush-cache.php' in output and (wp_root / '.maintenance').exists()
         (wp_root / 'wp-content/mu-plugins/dct-elementor-cache-failure.php').unlink()
         (wp_root / '.maintenance').unlink()
         wp('plugin', 'deactivate', 'elementor')
         wp('plugin', 'activate', 'elementor')
-        output = wp('dctwphero', 'import', f'--file={archive}', '--mode=mirror', '--yes')
+        output = wp('dctwpsollers', 'import', f'--file={archive}', '--mode=mirror', '--yes')
         assert not target.exists(), 'mirror elimina también el directorio de Elementor del destino'
         assert 'Fatal error' not in output and not (wp_root / '.maintenance').exists()
         print('OK: Elementor real inactivo/activo, limpieza CSS, fallo con mantenimiento y eliminación completa de Elementor activo sin fatal al cerrar.')

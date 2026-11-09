@@ -6,25 +6,25 @@ defined('WP_CLI') && WP_CLI || exit;
 require_once __DIR__ . '/class-database.php';
 global $wpdb;
 
-foreach (DCTWPHero_Migration_Database::tables() as $dctwphero_table)
+foreach (DCTWPSollers_Migration_Database::tables() as $dctwpsollers_table)
 {
-    DCTWPHero_Migration_Database::query('CHECK TABLE ' . DCTWPHero_Migration_Database::identifier($dctwphero_table));
-    $dctwphero_healthy = false;
+    DCTWPSollers_Migration_Database::query('CHECK TABLE ' . DCTWPSollers_Migration_Database::identifier($dctwpsollers_table));
+    $dctwpsollers_healthy = false;
 
-    foreach ($wpdb->last_result as $dctwphero_result)
+    foreach ($wpdb->last_result as $dctwpsollers_result)
     {
-        if ($dctwphero_result->Msg_type === 'status' && $dctwphero_result->Msg_text === 'OK')
+        if ($dctwpsollers_result->Msg_type === 'status' && $dctwpsollers_result->Msg_text === 'OK')
         {
-            $dctwphero_healthy = true;
+            $dctwpsollers_healthy = true;
         }
 
-        if ($dctwphero_result->Msg_type === 'error')
+        if ($dctwpsollers_result->Msg_type === 'error')
         {
             throw new RuntimeException('Una tabla restaurada no supera CHECK TABLE.');
         }
     }
 
-    if (!$dctwphero_healthy)
+    if (!$dctwpsollers_healthy)
     {
         throw new RuntimeException('No se ha podido confirmar la integridad de una tabla del sitio.');
     }

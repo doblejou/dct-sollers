@@ -2,15 +2,15 @@
 
 // Fallos SQL reales sobre una tabla de prueba independiente, nunca sobre filas del sitio.
 require_once dirname(__DIR__) . '/checks.php';
-$check = DCTWPHero_Checks::that(...);
+$check = DCTWPSollers_Checks::that(...);
 global $wpdb;
 $prefix = $wpdb->prefix;
-$source = DCTWPHero_Store::table();
+$source = DCTWPSollers_Store::table();
 $wpdb->prefix .= 'store_test_' . bin2hex(random_bytes(4)) . '_';
-$table = DCTWPHero_Store::table();
+$table = DCTWPSollers_Store::table();
 $suppressed = $wpdb->suppress_errors(true);
 $ip = '192.0.2.249';
-$settings = DCTWPHero_Login_Module::settings();
+$settings = DCTWPSollers_Login_Module::settings();
 $settings['threshold'] = 3;
 $filter = null;
 
@@ -43,7 +43,7 @@ try
 
         try
         {
-            $check(!DCTWPHero_Store::record_failure($ip, $settings), 'Propaga fallo SQL: ' . $statement);
+            $check(!DCTWPSollers_Store::record_failure($ip, $settings), 'Propaga fallo SQL: ' . $statement);
         }
         finally
         {
@@ -54,18 +54,18 @@ try
         $check($failed, 'Ejecutó la condición de error prevista: ' . $statement);
         $check($statement === 'START TRANSACTION' || $rollback, 'Cancela cambios pendientes tras fallo SQL');
         $check((int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i', $table)) === 0, 'No conserva incrementos fallidos');
-        $check(DCTWPHero_Store::record_failure($ip, $settings), 'Permite reintento tras fallo SQL');
+        $check(DCTWPSollers_Store::record_failure($ip, $settings), 'Permite reintento tras fallo SQL');
     }
 
     $settings['threshold'] = 1;
-    $check(DCTWPHero_Store::record_failure($ip, $settings), 'Prepara bloqueo activo');
-    $until = DCTWPHero_Store::blocked_until($ip);
+    $check(DCTWPSollers_Store::record_failure($ip, $settings), 'Prepara bloqueo activo');
+    $until = DCTWPSollers_Store::blocked_until($ip);
     $filter = static fn(string $sql): string => $sql === 'COMMIT' ? 'INVALID STORE TEST SQL' : $sql;
     add_filter('query', $filter);
 
     try
     {
-        $check(!DCTWPHero_Store::record_failure($ip, $settings), 'Bloqueo activo también propaga fallo de COMMIT');
+        $check(!DCTWPSollers_Store::record_failure($ip, $settings), 'Bloqueo activo también propaga fallo de COMMIT');
     }
     finally
     {
@@ -73,13 +73,13 @@ try
         $filter = null;
     }
 
-    $check(DCTWPHero_Store::blocked_until($ip) === $until, 'Fallo de confirmación no altera bloqueo activo');
+    $check(DCTWPSollers_Store::blocked_until($ip) === $until, 'Fallo de confirmación no altera bloqueo activo');
     $filter = static fn(string $sql): string => str_starts_with($sql, 'UPDATE') ? 'INVALID STORE TEST SQL' : $sql;
     add_filter('query', $filter);
 
     try
     {
-        $check(!DCTWPHero_Store::unlock($ip), 'Desbloqueo propaga fallo SQL');
+        $check(!DCTWPSollers_Store::unlock($ip), 'Desbloqueo propaga fallo SQL');
     }
     finally
     {
@@ -87,9 +87,9 @@ try
         $filter = null;
     }
 
-    $check(DCTWPHero_Store::blocked_until($ip) === $until, 'Desbloqueo fallido conserva bloqueo');
+    $check(DCTWPSollers_Store::blocked_until($ip) === $until, 'Desbloqueo fallido conserva bloqueo');
 
-    $check(DCTWPHero_Store::unlock($ip), 'Retira bloqueo antes de simular espera por la fila');
+    $check(DCTWPSollers_Store::unlock($ip), 'Retira bloqueo antes de simular espera por la fila');
     $locked_at = 0;
     $filter = static function (string $sql) use (&$locked_at): string
     {
@@ -105,7 +105,7 @@ try
 
     try
     {
-        $check(DCTWPHero_Store::record_failure($ip, $settings), 'Registra fallo tras espera por el bloqueo de fila');
+        $check(DCTWPSollers_Store::record_failure($ip, $settings), 'Registra fallo tras espera por el bloqueo de fila');
     }
     finally
     {
@@ -113,7 +113,7 @@ try
         $filter = null;
     }
 
-    $check($locked_at > 0 && DCTWPHero_Store::blocked_until($ip) >= $locked_at + $settings['duration'] * MINUTE_IN_SECONDS, 'La espera SQL no acorta la duración del bloqueo');
+    $check($locked_at > 0 && DCTWPSollers_Store::blocked_until($ip) >= $locked_at + $settings['duration'] * MINUTE_IN_SECONDS, 'La espera SQL no acorta la duración del bloqueo');
 
     $wpdb->query($wpdb->prepare('DELETE FROM %i', $table));
     $now = time();
@@ -132,21 +132,21 @@ try
     }
 
     sort($expected, SORT_STRING);
-    $first = DCTWPHero_Store::active_blocks(1);
-    $second = DCTWPHero_Store::active_blocks(2);
-    $check(DCTWPHero_Store::active_count() === 51, 'Cuenta todos los bloqueos activos');
+    $first = DCTWPSollers_Store::active_blocks(1);
+    $second = DCTWPSollers_Store::active_blocks(2);
+    $check(DCTWPSollers_Store::active_count() === 51, 'Cuenta todos los bloqueos activos');
     $check(count($first) === 50 && count($second) === 1, 'Pagina bloques de cincuenta sin perder filas');
     $check(array_column(array_merge($first, $second), 'ip') === $expected, 'Orden estable por IP cuando coincide la expiración');
-    $check(DCTWPHero_Store::active_blocks(0) == $first, 'Página cero se limita a la primera');
-    $check(DCTWPHero_Store::active_blocks(3) === array(), 'Página posterior vacía');
+    $check(DCTWPSollers_Store::active_blocks(0) == $first, 'Página cero se limita a la primera');
+    $check(DCTWPSollers_Store::active_blocks(3) === array(), 'Página posterior vacía');
     $wpdb->query($wpdb->prepare(
         "INSERT INTO %i (ip, failures, blocked_until, updated_at) VALUES (%s, '[]', %d, %d)",
         $table, $ip, $now - 1, $now - 604801
     ));
-    $check(DCTWPHero_Store::active_count() === 51, 'No cuenta bloqueos expirados');
-    DCTWPHero_Store::cleanup();
+    $check(DCTWPSollers_Store::active_count() === 51, 'No cuenta bloqueos expirados');
+    DCTWPSollers_Store::cleanup();
     $check((int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i', $table)) === 51, 'Limpia expirados y conserva todos los activos');
-    DCTWPHero_Checks::report();
+    DCTWPSollers_Checks::report();
 }
 finally
 {

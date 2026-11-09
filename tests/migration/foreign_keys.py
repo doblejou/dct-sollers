@@ -18,13 +18,13 @@ def create(wp):
             "ca_cycle_b" => "(id int PRIMARY KEY, parent_id int NULL, FOREIGN KEY(parent_id) REFERENCES `{$p}ca_cycle_a`(id))"
         );
         foreach ($definitions as $name => $definition) {
-            DCTWPHero_Migration_Database::query("CREATE TABLE `{$p}{$name}` {$definition} ENGINE=InnoDB");
+            DCTWPSollers_Migration_Database::query("CREATE TABLE `{$p}{$name}` {$definition} ENGINE=InnoDB");
         }
         foreach (array("ca_templates" => "1,7", "ca_sessions" => "1", "ca_history" => "1,1,1", "ca_meta" => "1,1,7", "ca_self" => "1,1", "ca_cycle_a" => "1,NULL", "ca_cycle_b" => "1,1") as $name => $values) {
-            DCTWPHero_Migration_Database::query("INSERT INTO `{$p}{$name}` VALUES ({$values})");
+            DCTWPSollers_Migration_Database::query("INSERT INTO `{$p}{$name}` VALUES ({$values})");
         }
-        DCTWPHero_Migration_Database::query("ALTER TABLE `{$p}ca_cycle_a` ADD FOREIGN KEY(parent_id) REFERENCES `{$p}ca_cycle_b`(id)");
-        DCTWPHero_Migration_Database::query("UPDATE `{$p}ca_cycle_a` SET parent_id=1");
+        DCTWPSollers_Migration_Database::query("ALTER TABLE `{$p}ca_cycle_a` ADD FOREIGN KEY(parent_id) REFERENCES `{$p}ca_cycle_b`(id)");
+        DCTWPSollers_Migration_Database::query("UPDATE `{$p}ca_cycle_a` SET parent_id=1");
     ''')
 
 
@@ -42,11 +42,11 @@ def verify(wp):
         }
         $wpdb->suppress_errors(true);
         if ($wpdb->query("INSERT INTO `{$p}ca_history` VALUES(99,999,1)") !== false) { throw new RuntimeException("Orphan accepted"); }
-        DCTWPHero_Migration_Database::query("START TRANSACTION");
+        DCTWPSollers_Migration_Database::query("START TRANSACTION");
         try {
-            DCTWPHero_Migration_Database::query("DELETE FROM `{$p}ca_templates` WHERE id=1");
+            DCTWPSollers_Migration_Database::query("DELETE FROM `{$p}ca_templates` WHERE id=1");
             if ((int) $wpdb->get_var("SELECT COUNT(*) FROM `{$p}ca_history`") !== 0 || $wpdb->get_var("SELECT template_id FROM `{$p}ca_meta` WHERE id=1") !== null) { throw new RuntimeException("Actions lost"); }
-        } finally { DCTWPHero_Migration_Database::query("ROLLBACK"); }
+        } finally { DCTWPSollers_Migration_Database::query("ROLLBACK"); }
         echo "foreign keys verified";
     ''')
     assert 'foreign keys verified' in output
@@ -54,7 +54,7 @@ def verify(wp):
 
 def failures(wp, archive, fixture, content, prefix):
     excluded = fixture / 'foreign-excluded.zip'
-    wp('dctwphero', 'export', f'--file={excluded}', f'--exclude-tables={prefix}ca_templates', expected=1)
+    wp('dctwpsollers', 'export', f'--file={excluded}', f'--exclude-tables={prefix}ca_templates', expected=1)
     assert not excluded.exists()
 
     def missing_parent(manifest, files):
@@ -66,7 +66,7 @@ def failures(wp, archive, fixture, content, prefix):
 
     bad_parent = fixture / 'foreign-missing-parent.zip'
     rewrite_package(archive, bad_parent, missing_parent)
-    wp('dctwphero', 'import', f'--file={bad_parent}', '--mode=merge', '--dry-run', expected=1)
+    wp('dctwpsollers', 'import', f'--file={bad_parent}', '--mode=merge', '--dry-run', expected=1)
     assert not (content.parent / '.maintenance').exists()
 
     def orphan(manifest, files):
@@ -80,8 +80,8 @@ def failures(wp, archive, fixture, content, prefix):
     rewrite_package(archive, bad, orphan)
     before = wp('db', 'tables', '--all-tables')
     marker = (content / 'uploads/fixture.txt').read_bytes()
-    wp('dctwphero', 'import', f'--file={bad}', '--mode=merge', '--dry-run')
-    wp('dctwphero', 'import', f'--file={bad}', '--mode=merge', '--yes', expected=1)
+    wp('dctwpsollers', 'import', f'--file={bad}', '--mode=merge', '--dry-run')
+    wp('dctwpsollers', 'import', f'--file={bad}', '--mode=merge', '--yes', expected=1)
     assert (content.parent / '.maintenance').exists()
     assert before == wp('db', 'tables', '--all-tables'), 'Preparación con relaciones se limpia tras fallo'
     assert marker == (content / 'uploads/fixture.txt').read_bytes()
@@ -90,22 +90,22 @@ def failures(wp, archive, fixture, content, prefix):
 
     # Una relación de otro prefijo nunca puede quedar apuntando a tablas retiradas.
     outside = 'outside_' + prefix + 'child'
-    wp('eval', f'DCTWPHero_Migration_Database::query("CREATE TABLE `{outside}` (id int, FOREIGN KEY(id) REFERENCES `{prefix}ca_templates`(id)) ENGINE=InnoDB");')
+    wp('eval', f'DCTWPSollers_Migration_Database::query("CREATE TABLE `{outside}` (id int, FOREIGN KEY(id) REFERENCES `{prefix}ca_templates`(id)) ENGINE=InnoDB");')
     try:
         for mode in ('merge', 'mirror'):
-            wp('dctwphero', 'import', f'--file={archive}', f'--mode={mode}', '--dry-run', expected=1)
-        wp('dctwphero', 'export', f'--file={fixture}/foreign-outside.zip', expected=1)
+            wp('dctwpsollers', 'import', f'--file={archive}', f'--mode={mode}', '--dry-run', expected=1)
+        wp('dctwpsollers', 'export', f'--file={fixture}/foreign-outside.zip', expected=1)
         assert not (content.parent / '.maintenance').exists()
     finally:
-        wp('eval', f'DCTWPHero_Migration_Database::query("DROP TABLE `{outside}`");')
+        wp('eval', f'DCTWPSollers_Migration_Database::query("DROP TABLE `{outside}`");')
 
     wp('eval', '''global $wpdb; $p = $wpdb->prefix;
-        DCTWPHero_Migration_Database::query("CREATE TABLE `{$p}extra_fk_a` (id int PRIMARY KEY, parent_id int) ENGINE=InnoDB");
-        DCTWPHero_Migration_Database::query("CREATE TABLE `{$p}extra_fk_b` (id int PRIMARY KEY, parent_id int, FOREIGN KEY(parent_id) REFERENCES `{$p}extra_fk_a`(id)) ENGINE=InnoDB");
-        DCTWPHero_Migration_Database::query("ALTER TABLE `{$p}extra_fk_a` ADD FOREIGN KEY(parent_id) REFERENCES `{$p}extra_fk_b`(id)");
+        DCTWPSollers_Migration_Database::query("CREATE TABLE `{$p}extra_fk_a` (id int PRIMARY KEY, parent_id int) ENGINE=InnoDB");
+        DCTWPSollers_Migration_Database::query("CREATE TABLE `{$p}extra_fk_b` (id int PRIMARY KEY, parent_id int, FOREIGN KEY(parent_id) REFERENCES `{$p}extra_fk_a`(id)) ENGINE=InnoDB");
+        DCTWPSollers_Migration_Database::query("ALTER TABLE `{$p}extra_fk_a` ADD FOREIGN KEY(parent_id) REFERENCES `{$p}extra_fk_b`(id)");
     ''')
-    wp('dctwphero', 'import', f'--file={archive}', '--mode=merge', '--dry-run')
-    wp('dctwphero', 'import', f'--file={archive}', '--mode=mirror', '--yes')
+    wp('dctwpsollers', 'import', f'--file={archive}', '--mode=merge', '--dry-run')
+    wp('dctwpsollers', 'import', f'--file={archive}', '--mode=mirror', '--yes')
     assert prefix + 'extra_fk_a' not in wp('db', 'tables', '--all-tables-with-prefix')
     assert prefix + 'extra_fk_b' not in wp('db', 'tables', '--all-tables-with-prefix')
     verify(wp)

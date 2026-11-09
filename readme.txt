@@ -1,4 +1,4 @@
-=== DCT WP Hero ===
+=== DCTWP Sollers ===
 Contributors: doblejou
 Tags: security, login, migration, cdn
 Requires at least: 7.0
@@ -12,7 +12,7 @@ Modular tools for IP-based login protection, WP-CLI site migration, and static r
 
 == Description ==
 
-DCT WP Hero provides independent modules configured under Settings → DCT WP Hero. It uses WordPress APIs without mandatory commercial services or external PHP libraries.
+DCTWP Sollers provides independent modules configured under Settings → DCTWP Sollers. It uses WordPress APIs without mandatory commercial services or external PHP libraries.
 
 * Login protection: limits failed attempts per IP and temporarily blocks all access to wp-login.php. Enabled by default.
 * CLI migration: exports and imports sites using its own ZIP format, exclusively through WP-CLI. Enabled by default.
@@ -32,10 +32,10 @@ The IP address comes exclusively from REMOTE_ADDR. When using a proxy or CDN, co
 
 Examples:
 
-    wp dctwphero export --file=/ruta/privada/sitio.zip
-    wp dctwphero import --file=/ruta/privada/sitio.zip --mode=merge --dry-run
-    wp dctwphero import --file=/ruta/privada/sitio.zip --mode=merge
-    wp dctwphero import --file=/ruta/privada/sitio.zip --mode=mirror --yes
+    wp dctwpsollers export --file=/ruta/privada/sitio.zip
+    wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=merge --dry-run
+    wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=merge
+    wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=mirror --yes
 
 Importing overwrites data, users, and code. It does not create a backup or guarantee rollback. Make an independent backup before importing and only use trusted packages. Packages contain unencrypted sensitive data: store them outside public directories with restricted access.
 
@@ -53,9 +53,13 @@ Saving settings makes no external requests. The Check CDN button explicitly send
 
 == Installation ==
 
-1. Upload the dctwphero folder to wp-content/plugins/ or install the ZIP through Plugins → Add Plugin → Upload Plugin.
-2. Activate DCT WP Hero.
-3. Open Settings → DCT WP Hero and configure the modules you need.
+This is an independent plugin identity. Uninstall the previous plugin before
+installing DCTWP Sollers. Previous settings, login blocks and migration archives
+are not imported or supported through compatibility aliases.
+
+1. Upload the dctwpsollers folder to wp-content/plugins/ or install the ZIP through Plugins → Add Plugin → Upload Plugin.
+2. Activate DCTWP Sollers.
+3. Open Settings → DCTWP Sollers and configure the modules you need.
 4. Before enabling CDN rewriting, configure its hostname and verify the service and CORS.
 
 To update, replace the plugin files without uninstalling. Deactivation preserves data; uninstalling removes the IP table, plugin settings, and scheduled cleanup event. Export files created outside the plugin are not deleted on uninstall.
@@ -64,9 +68,9 @@ To update, replace the plugin files without uninstalling. Deactivation preserves
 
 = How can I unblock an administrator? =
 
-From another IP address, use Settings → DCT WP Hero → Login protection. Alternatively, use WP-CLI:
+From another IP address, use Settings → DCTWP Sollers → Login protection. Alternatively, use WP-CLI:
 
-    wp eval 'DCTWPHero_Store::unlock("192.0.2.10");'
+    wp eval 'DCTWPSollers_Store::unlock("192.0.2.10");'
 
 = Does this replace a firewall? =
 
