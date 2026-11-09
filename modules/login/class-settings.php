@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Login_Settings
+final class DCTWPSollers_Login_Settings
 {
     ################################################
     #
@@ -31,7 +31,7 @@ final class DCTWPHero_Login_Settings
     public static function get(): array
     {
         $defaults = self::defaults();
-        $saved = get_option('dctwphero_settings', array());
+        $saved = get_option('dctwpsollers_settings', array());
 
         return self::validate(is_array($saved) ? array_replace($defaults, $saved) : null) ?? $defaults;
     }

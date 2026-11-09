@@ -4,7 +4,7 @@
 require_once __DIR__ . '/checks.php';
 require_once ABSPATH . 'wp-admin/includes/template.php';
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
-$check = DCTWPHero_Checks::that(...);
+$check = DCTWPSollers_Checks::that(...);
 $saved_user = get_current_user_id();
 $saved_get = $_GET;
 $query = array();
@@ -32,9 +32,9 @@ try
     {
         $_GET['tab'] = $tab;
         ob_start();
-        DCTWPHero_Admin::render();
+        DCTWPSollers_Admin::render();
         $html = ob_get_clean();
-        $check(str_contains($html, 'wrap dctwphero'), 'La presentación está limitada al contenedor del plugin');
+        $check(str_contains($html, 'wrap dctwpsollers'), 'La presentación está limitada al contenedor del plugin');
         $check(substr_count($html, 'aria-current="page"') === 1, 'Una única sección se identifica como actual');
         $check(!str_contains($html, '<script'), 'La interfaz no requiere JavaScript propio');
         preg_match_all('/\bid="([^"]+)"/', $html, $ids);
@@ -42,7 +42,7 @@ try
 
         if ($tab === 'modules')
         {
-            $check(substr_count($html, 'class="dctwphero-module-card"') === count(DCTWPHero::modules()), 'Cada módulo dispone de una tarjeta');
+            $check(substr_count($html, 'class="dctwpsollers-module-card"') === count(DCTWPSollers::modules()), 'Cada módulo dispone de una tarjeta');
             $check(str_contains($html, 'Los indicadores muestran el estado guardado'), 'Se distingue el estado guardado de los cambios pendientes');
         }
         else
@@ -52,7 +52,7 @@ try
 
         if ($tab === 'frontend')
         {
-            $check(substr_count($html, 'class="dctwphero-cleanup-card"') === 9, 'Las nueve limpiezas conservan su ayuda visible');
+            $check(substr_count($html, 'class="dctwpsollers-cleanup-card"') === 9, 'Las nueve limpiezas conservan su ayuda visible');
         }
 
         if ($tab === 'migration')
@@ -62,7 +62,7 @@ try
 
     }
 
-    DCTWPHero_Checks::report();
+    DCTWPSollers_Checks::report();
 }
 catch (Throwable $error)
 {

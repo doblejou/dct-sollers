@@ -19,23 +19,23 @@ class Links(HTMLParser):
 
 def scenarios(wp, request, admin, subscriber, post, url):
     path = '/?p=' + post
-    admin_path = '/wp-admin/options-general.php?page=dctwphero&tab=frontend'
+    admin_path = '/wp-admin/options-general.php?page=dctwpsollers&tab=frontend'
     body = request(path)[1]
     assert 'application/rsd+xml' in body and 'wp-emoji' in body and 'dashicons-css' in body
     assert any(link.get('rel') == 'shortlink' for link in Links(body).links)
     assert 'El módulo Frontend está desactivado' in request(admin_path, opener=admin)[1]
-    wp('eval', '$m = get_option("dctwphero_modules", array()); $m["frontend"] = 1; update_option("dctwphero_modules", $m);')
+    wp('eval', '$m = get_option("dctwpsollers_modules", array()); $m["frontend"] = 1; update_option("dctwpsollers_modules", $m);')
     body = request(path)[1]
     assert 'application/rsd+xml' in body and 'wp-emoji' in body and 'dashicons-css' in body, 'Activar con valores iniciales no aplica limpieza'
     assert not any(link.get('rel') == 'preload' for link in Links(body).links)
-    wp('eval', '$m = get_option("dctwphero_modules"); $m["frontend"] = 0; update_option("dctwphero_modules", $m);')
-    wp('eval', '$s = DCTWPHero_Frontend_Settings::defaults(); '
+    wp('eval', '$m = get_option("dctwpsollers_modules"); $m["frontend"] = 0; update_option("dctwpsollers_modules", $m);')
+    wp('eval', '$s = DCTWPSollers_Frontend_Settings::defaults(); '
        '$s["emojis"] = $s["rsd"] = $s["shortlinks"] = $s["dashicons"] = 1; '
        '$s["preconnect"] = "https://connections.example.test"; $s["dns_prefetch"] = "dns.example.test"; '
        '$s["fonts"] = home_url("/font.woff2?v=1&x=2"); $s["image"] = home_url("/hero.webp"); '
-       'update_option("dctwphero_frontend_settings", $s);')
+       'update_option("dctwpsollers_frontend_settings", $s);')
     assert 'application/rsd+xml' in request(path)[1], 'Configurar no activa el módulo'
-    wp('eval', '$m = get_option("dctwphero_modules"); $m["frontend"] = 1; update_option("dctwphero_modules", $m);')
+    wp('eval', '$m = get_option("dctwpsollers_modules"); $m["frontend"] = 1; update_option("dctwpsollers_modules", $m);')
     body = request(path)[1]
     links = Links(body).links
     assert 'application/rsd+xml' not in body and 'wp-emoji' not in body and 'dashicons-css' not in body
@@ -65,33 +65,33 @@ def scenarios(wp, request, admin, subscriber, post, url):
     for excluded in ('/wp-login.php', '/?feed=rss2', '/?rest_route=/wp/v2/posts/' + post):
         assert 'connections.example.test' not in request(excluded)[1]
     # CDN procesa tanto la precarga como la referencia real de la imagen.
-    wp('eval', '$s = DCTWPHero_CDN_Settings::defaults(); $s["hostname"] = "cdn.example.test"; '
-       'update_option("dctwphero_cdn_settings", $s); '
-       '$m = get_option("dctwphero_modules"); $m["cdn"] = 1; update_option("dctwphero_modules", $m);')
+    wp('eval', '$s = DCTWPSollers_CDN_Settings::defaults(); $s["hostname"] = "cdn.example.test"; '
+       'update_option("dctwpsollers_cdn_settings", $s); '
+       '$m = get_option("dctwpsollers_modules"); $m["cdn"] = 1; update_option("dctwpsollers_modules", $m);')
     body = request()[1]
     links = Links(body).links
     assert any(link.get('as') == 'font' and link['href'] == 'http://cdn.example.test/font.woff2?v=1&x=2' for link in links)
     assert any(link.get('as') == 'image' and link['href'] == 'http://cdn.example.test/hero.webp' for link in links)
     assert 'src="http://cdn.example.test/hero.webp"' in body
     # Permisos y nonce reales, con el módulo desactivado.
-    wp('eval', '$m = get_option("dctwphero_modules"); $m["frontend"] = $m["cdn"] = 0; update_option("dctwphero_modules", $m);')
+    wp('eval', '$m = get_option("dctwpsollers_modules"); $m["frontend"] = $m["cdn"] = 0; update_option("dctwpsollers_modules", $m);')
     body = request(admin_path, opener=admin)[1]
     nonce = re.search(r'name="_wpnonce" value="([^"]+)"', body).group(1)
-    settings = json.loads(wp('eval', 'echo wp_json_encode(DCTWPHero_Frontend_Settings::get());'))
-    values = {'option_page': 'dctwphero_frontend', 'action': 'update', '_wpnonce': 'invalid', '_wp_http_referer': admin_path}
-    values.update({f'dctwphero_frontend_settings[{key}]': value for key, value in settings.items()})
-    values['dctwphero_frontend_settings[preconnect]'] = 'https://saved.example.test'
+    settings = json.loads(wp('eval', 'echo wp_json_encode(DCTWPSollers_Frontend_Settings::get());'))
+    values = {'option_page': 'dctwpsollers_frontend', 'action': 'update', '_wpnonce': 'invalid', '_wp_http_referer': admin_path}
+    values.update({f'dctwpsollers_frontend_settings[{key}]': value for key, value in settings.items()})
+    values['dctwpsollers_frontend_settings[preconnect]'] = 'https://saved.example.test'
     assert request('/wp-admin/options.php', data=values, opener=admin)[0] == 403
     values['_wpnonce'] = nonce
     assert request('/wp-admin/options.php', data=values, opener=admin)[0] == 200
-    assert wp('eval', 'echo DCTWPHero_Frontend_Settings::get()["preconnect"];') == 'https://saved.example.test'
-    values['dctwphero_frontend_settings[preconnect]'] = 'javascript:alert(1)'
+    assert wp('eval', 'echo DCTWPSollers_Frontend_Settings::get()["preconnect"];') == 'https://saved.example.test'
+    values['dctwpsollers_frontend_settings[preconnect]'] = 'javascript:alert(1)'
     assert request('/wp-admin/options.php', data=values, opener=admin)[0] == 200
-    assert wp('eval', 'echo DCTWPHero_Frontend_Settings::get()["preconnect"];') == 'https://saved.example.test'
+    assert wp('eval', 'echo DCTWPSollers_Frontend_Settings::get()["preconnect"];') == 'https://saved.example.test'
     assert request(admin_path, opener=subscriber)[0] == 403
     assert request('/wp-admin/options.php', data=values, opener=subscriber)[0] == 403
     assert 'id="loginform"' in request('/wp-admin/options.php', data=values)[1], 'Anónimo redirigido al login'
-    assert wp('eval', 'echo DCTWPHero_Frontend_Settings::get()["preconnect"];') == 'https://saved.example.test'
+    assert wp('eval', 'echo DCTWPSollers_Frontend_Settings::get()["preconnect"];') == 'https://saved.example.test'
     body = request(path)[1]
     assert 'application/rsd+xml' in body and 'dashicons-css' in body and 'wp-emoji' in body
     assert 'connections.example.test' not in body and 'saved.example.test' not in body
@@ -102,8 +102,8 @@ def scenarios(wp, request, admin, subscriber, post, url):
 def cleanup_scenarios(wp, request, admin, path, post, url):
     wp('post', 'update', post, '--comment_status=open')
     wp('option', 'update', 'show_on_front', 'posts')
-    wp('eval', 'update_option("dctwphero_frontend_settings", DCTWPHero_Frontend_Settings::defaults()); '
-       '$m = get_option("dctwphero_modules"); $m["frontend"] = 1; update_option("dctwphero_modules", $m);')
+    wp('eval', 'update_option("dctwpsollers_frontend_settings", DCTWPSollers_Frontend_Settings::defaults()); '
+       '$m = get_option("dctwpsollers_modules"); $m["frontend"] = 1; update_option("dctwpsollers_modules", $m);')
     category = wp('term', 'create', 'category', 'Frontend RSS', '--slug=frontend-rss', '--porcelain')
     tag = wp('term', 'create', 'post_tag', 'Frontend tag', '--slug=frontend-tag', '--porcelain')
     wp('post', 'term', 'set', post, 'category', category, '--by=id')
@@ -131,7 +131,7 @@ def cleanup_scenarios(wp, request, admin, path, post, url):
     oembed_path = '/?rest_route=/oembed/1.0/embed&url=' + quote(url + path, safe='')
 
     for key in new_flags:
-        wp('eval', '$s = DCTWPHero_Frontend_Settings::defaults(); $s["' + key + '"] = 1; update_option("dctwphero_frontend_settings", $s);')
+        wp('eval', '$s = DCTWPSollers_Frontend_Settings::defaults(); $s["' + key + '"] = 1; update_option("dctwpsollers_frontend_settings", $s);')
         _, body, headers = request(path)
         expected = baseline.copy()
         if key == 'rest_links':
@@ -157,29 +157,29 @@ def cleanup_scenarios(wp, request, admin, path, post, url):
         # POST y previews no reciben la limpieza de metadatos.
         assert all(markers(request(path, data={})[1], {})[name] for name in ('rest', 'oembed', 'generator', 'feed_links', 'comments_feed_links'))
 
-    wp('eval', '$s = DCTWPHero_Frontend_Settings::defaults(); '
+    wp('eval', '$s = DCTWPSollers_Frontend_Settings::defaults(); '
        '$s["rest_links"] = $s["oembed_links"] = $s["generator"] = $s["feed_links"] = $s["comments_feed_links"] = 1; '
-       'update_option("dctwphero_frontend_settings", $s);')
+       'update_option("dctwpsollers_frontend_settings", $s);')
     _, body, headers = request(path)
     assert not any(markers(body, headers).values()), 'Opciones combinadas retiran solo descubrimientos seleccionados'
-    admin_path = '/wp-admin/options-general.php?page=dctwphero&tab=frontend'
+    admin_path = '/wp-admin/options-general.php?page=dctwpsollers&tab=frontend'
     body = request(admin_path, opener=admin)[1]
     assert body.count('Qué elimina') == body.count('Qué conserva') == body.count('Precaución') == 9
     assert 'no una medida de seguridad' in body and 'su ahorro de rendimiento es pequeño' in body
     for key in new_flags:
-        control = re.search(r'<input\b[^>]*type="checkbox"[^>]*id="dctwphero-frontend-' + key + r'"[^>]*>', body).group(0)
-        assert 'checked=' in control and f'aria-describedby="dctwphero-frontend-{key}-help"' in control
-        assert f'id="dctwphero-frontend-{key}-help"' in body
+        control = re.search(r'<input\b[^>]*type="checkbox"[^>]*id="dctwpsollers-frontend-' + key + r'"[^>]*>', body).group(0)
+        assert 'checked=' in control and f'aria-describedby="dctwpsollers-frontend-{key}-help"' in control
+        assert f'id="dctwpsollers-frontend-{key}-help"' in body
     ids = re.findall(r'\bid="([^"]+)"', body)
     assert len(ids) == len(set(ids)), 'Identificadores de la pantalla únicos'
     draft = wp('post', 'create', '--post_status=draft', '--post_title=Cleanup preview', '--porcelain')
     preview = request('/?p=' + draft + '&preview=true', opener=admin)[1]
     assert all(markers(preview, {})[name] for name in ('rest', 'oembed', 'generator', 'feed_links', 'comments_feed_links'))
-    wp('eval', '$m = get_option("dctwphero_modules"); $m["frontend"] = 0; update_option("dctwphero_modules", $m);')
+    wp('eval', '$m = get_option("dctwpsollers_modules"); $m["frontend"] = 0; update_option("dctwpsollers_modules", $m);')
     _, body, headers = request(path)
     assert markers(body, headers) == baseline, 'Desactivar restituye descubrimientos'
-    assert wp('eval', 'echo DCTWPHero_Frontend_Settings::get()["rest_links"];') == '1', 'Desactivar conserva opciones'
-    wp('eval', '$m = get_option("dctwphero_modules"); $m["frontend"] = 1; update_option("dctwphero_modules", $m);')
+    assert wp('eval', 'echo DCTWPSollers_Frontend_Settings::get()["rest_links"];') == '1', 'Desactivar conserva opciones'
+    wp('eval', '$m = get_option("dctwpsollers_modules"); $m["frontend"] = 1; update_option("dctwpsollers_modules", $m);')
     _, body, headers = request(path)
     assert not any(markers(body, headers).values()), 'Reactivar recupera las opciones guardadas'
     print('OK: REST/oEmbed/generator/RSS independientes, servicios conservados, ayuda accesible y reversibilidad.')

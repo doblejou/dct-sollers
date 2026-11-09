@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: DCT WP Hero
+ * Plugin Name: DCTWP Sollers
  * Description: Herramientas modulares para WordPress con protección de login configurable.
  * Author: Jose Gonzalez - Daycom Technologies
  * Version: 0.2.20
@@ -8,7 +8,7 @@
  * Requires PHP: 8.4
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: dctwphero
+ * Text Domain: dctwpsollers
  */
 
 defined('ABSPATH') || exit;
@@ -28,7 +28,7 @@ require_once __DIR__ . '/modules/frontend/class-settings.php';
 require_once __DIR__ . '/modules/frontend/class-module.php';
 require_once __DIR__ . '/modules/frontend/class-admin.php';
 
-final class DCTWPHero
+final class DCTWPSollers
 {
     ################################################
     #
@@ -40,39 +40,39 @@ final class DCTWPHero
     public static function modules(): array
     {
         $login = array();
-        $login['label'] = __('Protección de login', 'dctwphero');
-        $login['description'] = __('Limita los fallos por IP y bloquea temporalmente el acceso a wp-login.php.', 'dctwphero');
+        $login['label'] = __('Protección de login', 'dctwpsollers');
+        $login['description'] = __('Limita los fallos por IP y bloquea temporalmente el acceso a wp-login.php.', 'dctwpsollers');
         $login['default'] = true;
-        $login['register'] = DCTWPHero_Login_Module::register(...);
-        $login['initialize'] = DCTWPHero_Login_Module::initialize(...);
-        $login['activate'] = DCTWPHero_Login_Module::activate(...);
-        $login['deactivate'] = DCTWPHero_Login_Module::deactivate(...);
-        $login['admin_register'] = DCTWPHero_Login_Admin::register(...);
-        $login['render'] = DCTWPHero_Login_Admin::render(...);
+        $login['register'] = DCTWPSollers_Login_Module::register(...);
+        $login['initialize'] = DCTWPSollers_Login_Module::initialize(...);
+        $login['activate'] = DCTWPSollers_Login_Module::activate(...);
+        $login['deactivate'] = DCTWPSollers_Login_Module::deactivate(...);
+        $login['admin_register'] = DCTWPSollers_Login_Admin::register(...);
+        $login['render'] = DCTWPSollers_Login_Admin::render(...);
         $modules = array();
         $modules['login'] = $login;
         $migration = array();
-        $migration['label'] = __('Migración CLI', 'dctwphero');
-        $migration['description'] = __('Exporta e importa el sitio exclusivamente mediante WP-CLI.', 'dctwphero');
+        $migration['label'] = __('Migración CLI', 'dctwpsollers');
+        $migration['description'] = __('Exporta e importa el sitio exclusivamente mediante WP-CLI.', 'dctwpsollers');
         $migration['default'] = true;
-        $migration['register'] = DCTWPHero_Migration_Module::register(...);
-        $migration['render'] = DCTWPHero_Migration_Admin::render(...);
+        $migration['register'] = DCTWPSollers_Migration_Module::register(...);
+        $migration['render'] = DCTWPSollers_Migration_Admin::render(...);
         $modules['migration'] = $migration;
         $cdn = array();
-        $cdn['label'] = __('CDN', 'dctwphero');
-        $cdn['description'] = __('Sirve recursos estáticos desde un dominio CDN mediante la reescritura de URL.', 'dctwphero');
+        $cdn['label'] = __('CDN', 'dctwpsollers');
+        $cdn['description'] = __('Sirve recursos estáticos desde un dominio CDN mediante la reescritura de URL.', 'dctwpsollers');
         $cdn['default'] = false;
-        $cdn['register'] = DCTWPHero_CDN_Module::register(...);
-        $cdn['admin_register'] = DCTWPHero_CDN_Admin::register(...);
-        $cdn['render'] = DCTWPHero_CDN_Admin::render(...);
+        $cdn['register'] = DCTWPSollers_CDN_Module::register(...);
+        $cdn['admin_register'] = DCTWPSollers_CDN_Admin::register(...);
+        $cdn['render'] = DCTWPSollers_CDN_Admin::render(...);
         $modules['cdn'] = $cdn;
         $frontend = array();
-        $frontend['label'] = __('Frontend', 'dctwphero');
-        $frontend['description'] = __('Limpia recursos prescindibles y anticipa conexiones y recursos importantes del frontend.', 'dctwphero');
+        $frontend['label'] = __('Frontend', 'dctwpsollers');
+        $frontend['description'] = __('Limpia recursos prescindibles y anticipa conexiones y recursos importantes del frontend.', 'dctwpsollers');
         $frontend['default'] = false;
-        $frontend['register'] = DCTWPHero_Frontend_Module::register(...);
-        $frontend['admin_register'] = DCTWPHero_Frontend_Admin::register(...);
-        $frontend['render'] = DCTWPHero_Frontend_Admin::render(...);
+        $frontend['register'] = DCTWPSollers_Frontend_Module::register(...);
+        $frontend['admin_register'] = DCTWPSollers_Frontend_Admin::register(...);
+        $frontend['render'] = DCTWPSollers_Frontend_Admin::render(...);
         $modules['frontend'] = $frontend;
 
         return $modules;
@@ -99,7 +99,7 @@ final class DCTWPHero
     ################################################
     public static function module_states(): array
     {
-        $saved = get_option('dctwphero_modules', array());
+        $saved = get_option('dctwpsollers_modules', array());
         $states = array();
 
         foreach (self::modules() as $id => $module)
@@ -178,7 +178,7 @@ final class DCTWPHero
     {
         if (is_multisite())
         {
-            wp_die(esc_html__('DCT WP Hero requiere una instalación individual de WordPress.', 'dctwphero'));
+            wp_die(esc_html__('DCTWP Sollers requiere una instalación individual de WordPress.', 'dctwpsollers'));
         }
 
         foreach (self::modules() as $module)
@@ -209,8 +209,8 @@ final class DCTWPHero
     }
 }
 
-register_activation_hook(__FILE__, DCTWPHero::activate(...));
-register_deactivation_hook(__FILE__, DCTWPHero::deactivate(...));
-add_action('plugins_loaded', DCTWPHero::boot(...), 0);
-add_action('admin_menu', DCTWPHero_Admin::menu(...));
-add_action('admin_init', DCTWPHero_Admin::register_settings(...));
+register_activation_hook(__FILE__, DCTWPSollers::activate(...));
+register_deactivation_hook(__FILE__, DCTWPSollers::deactivate(...));
+add_action('plugins_loaded', DCTWPSollers::boot(...), 0);
+add_action('admin_menu', DCTWPSollers_Admin::menu(...));
+add_action('admin_init', DCTWPSollers_Admin::register_settings(...));

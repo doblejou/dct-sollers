@@ -11,23 +11,23 @@ Contrastar en el código los detalles afectados y actualizarla al cambiarlos.
 
 | Archivo | Responsabilidad / punto de entrada |
 |---|---|
-| `class-module.php` | `DCTWPHero_Login_Module`: ciclo de vida, IP, hooks y protección. |
-| `class-settings.php` | `DCTWPHero_Login_Settings`: valores iniciales, límites, validación y lectura. |
-| `class-store.php` | `DCTWPHero_Store`: esquema, migraciones, transacciones, bloqueos y limpieza. El nombre histórico se conserva. |
-| `class-admin.php` | `DCTWPHero_Login_Admin`: Settings API, validación administrativa, listado y desbloqueo. |
+| `class-module.php` | `DCTWPSollers_Login_Module`: ciclo de vida, IP, hooks y protección. |
+| `class-settings.php` | `DCTWPSollers_Login_Settings`: valores iniciales, límites, validación y lectura. |
+| `class-store.php` | `DCTWPSollers_Store`: esquema, migraciones, transacciones, bloqueos y limpieza. El nombre histórico se conserva. |
+| `class-admin.php` | `DCTWPSollers_Login_Admin`: Settings API, validación administrativa, listado y desbloqueo. |
 | `templates/settings.php` | Presentación de ajustes y bloqueos; recibe datos preparados por `render()`. Sin consultas ni reglas de negocio. |
 
 Conexiones externas (rutas desde la raíz):
 
-- `dctwphero.php`: carga las clases y declara callbacks en `DCTWPHero::modules()`.
+- `dctwpsollers.php`: carga las clases y declara callbacks en `DCTWPSollers::modules()`.
   `boot()` ejecuta `initialize_modules()` antes de registrar módulos. La administración
   se registra incluso con login desactivado; la protección, solo si está activo.
-- No hay delegados de login en `DCTWPHero`: usar `DCTWPHero_Login_Settings::get()`
-  y `DCTWPHero_Login_Module::client_ip()` directamente.
+- No hay delegados de login en `DCTWPSollers`: usar `DCTWPSollers_Login_Settings::get()`
+  y `DCTWPSollers_Login_Module::client_ip()` directamente.
 - `includes/class-admin.php` y `templates/`: navegación y estados generales,
   no lógica específica de login.
 - El callback de registro `initialize` actualiza el almacén y conecta
-  `dctwphero_cleanup` a `DCTWPHero_Store::cleanup()`, también con login desactivado.
+  `dctwpsollers_cleanup` a `DCTWPSollers_Store::cleanup()`, también con login desactivado.
   Usa un callable estable para no duplicar el hook al reinicializar. Los callbacks
   `activate` y `deactivate` programan o retiran su cron horario; son del ciclo de
   vida del plugin completo, no de la casilla del módulo. Activar prepara el esquema
@@ -63,7 +63,7 @@ Invariantes:
 
 ## Ajustes y datos persistidos
 
-- Opción `dctwphero_settings`: `threshold` (3), `window` (1 minuto), `duration`
+- Opción `dctwpsollers_settings`: `threshold` (3), `window` (1 minuto), `duration`
   (15 minutos). Mínimo 1; máximos 10000, 10080 y 10080 respectivamente.
   Los valores iniciales no sobrescriben ajustes válidos ya guardados.
 - `Settings::validate()` acepta enteros o cadenas de dígitos; rechaza booleanos,
@@ -71,15 +71,15 @@ Invariantes:
 - `Settings::get()` completa ajustes persistidos parciales con valores iniciales;
   ante valores inválidos usa todos los iniciales. `sanitize()` rechaza un envío
   inválido, muestra error y conserva los ajustes anteriores normalizados.
-- Estado general separado en `dctwphero_modules['login']`; sin estado guardado
+- Estado general separado en `dctwpsollers_modules['login']`; sin estado guardado
   o con un valor inválido se aplica el valor inicial del registro central.
-  La normalización compartida reside en `DCTWPHero::module_states()`.
-- Tabla InnoDB `$wpdb->prefix . 'dctwphero_ips'`: `ip` (PK varchar(45)),
+  La normalización compartida reside en `DCTWPSollers::module_states()`.
+- Tabla InnoDB `$wpdb->prefix . 'dctwpsollers_ips'`: `ip` (PK varchar(45)),
   `failures` (JSON de timestamps en longtext), `blocked_until` y `updated_at`
   (segundos Unix, bigint unsigned). Índices en ambas columnas temporales.
 - `cleanup()` elimina filas sin bloqueo vigente y con `updated_at` anterior a
   la ventana configurada. Un retraso de WP-Cron no prolonga los bloqueos.
-- `DB_VERSION = 1`, opción `dctwphero_db_version`. `upgrade()` usa `GET_LOCK`,
+- `DB_VERSION = 1`, opción `dctwpsollers_db_version`. `upgrade()` usa `GET_LOCK`,
   ejecuta pasos secuenciales y guarda la versión tras cada éxito. Rechaza downgrade.
   El paso 1 usa `dbDelta()` y verifica motor, columnas e índices sin borrar filas.
   Para cambiar esquema, aumentar versión y añadir paso; no editar solo el inicial.
@@ -87,14 +87,14 @@ Invariantes:
 
 ## Administración
 
-- Permiso `manage_options`. Settings API: grupo `dctwphero`, opción de ajustes anterior.
-  Registra `type=array` y callback explícito `DCTWPHero_Login_Admin::sanitize`.
+- Permiso `manage_options`. Settings API: grupo `dctwpsollers`, opción de ajustes anterior.
+  Registra `type=array` y callback explícito `DCTWPSollers_Login_Admin::sanitize`.
   `tests/modules.php` verifica el registro y la ejecución vía `sanitize_option()`.
 - `render()` prepara paginación de 50 bloqueos por página; orden por expiración
   descendente e IP ascendente en el almacén. También prepara el estado del módulo;
   la plantilla no consulta opciones para decidir su aviso de desactivación.
-- `admin_post_dctwphero_unlock`: solo POST, IP validada/normalizada y nonce
-  `dctwphero_unlock_<ip>`. Error SQL devuelve 500; éxito redirige a `tab=login`.
+- `admin_post_dctwpsollers_unlock`: solo POST, IP validada/normalizada y nonce
+  `dctwpsollers_unlock_<ip>`. Error SQL devuelve 500; éxito redirige a `tab=login`.
 - La paginación elimina las barras de WordPress antes de convertir a entero y
   limita la página al rango disponible. La navegación y los avisos GET son de
   solo lectura, sin nonce; el desbloqueo sigue exigiendo POST y nonce.
@@ -105,6 +105,10 @@ Invariantes:
   campo oculto sin ID, para no repetir identificadores al listar varias IP.
 
 ## Dónde tocar y cómo comprobar
+
+La identidad pública es DCTWP Sollers y el prefijo técnico `dctwpsollers`.
+No hay lectura ni migración de opciones, tablas o cron del plugin anterior.
+`tests/modules.php` verifica cabecera, dominio de traducción y tabla propia.
 
 Comandos desde la raíz, **solo en pruebas**: las integraciones modifican datos.
 

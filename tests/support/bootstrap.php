@@ -5,7 +5,7 @@ $directory = $args[0] ?? '';
 $prefix = $args[1] ?? '';
 
 if (!preg_match('/^dcttest_[a-f0-9]{12}_$/D', $prefix)
-    || !preg_match('~^/tmp/(?:opencode/)?dctwphero-test-[^/]+/wordpress(?:-target)?$~D', realpath($directory) ?: ''))
+    || !preg_match('~^/tmp/(?:opencode/)?dctwpsollers-test-[^/]+/wordpress(?:-target)?$~D', realpath($directory) ?: ''))
 {
     throw new RuntimeException('Destino de pruebas inválido.');
 }

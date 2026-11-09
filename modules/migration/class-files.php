@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Migration_Files
+final class DCTWPSollers_Migration_Files
 {
     ################################################
     #
@@ -351,7 +351,7 @@ final class DCTWPHero_Migration_Files
 
         self::directory($parent, 0755);
 
-        $temporary = tempnam($parent, '.dct-migration-');
+        $temporary = tempnam($parent, '.dctwpsollers-migration-');
 
         if ($temporary === false)
         {

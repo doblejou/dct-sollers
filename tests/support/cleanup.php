@@ -4,7 +4,7 @@
 global $wpdb;
 
 if (!preg_match('/^dcttest_[a-f0-9]{12}_$/D', $wpdb->prefix)
-    || !preg_match('~^/tmp/(?:opencode/)?dctwphero-test-[^/]+/wordpress(?:-target)?$~D', realpath(ABSPATH) ?: ''))
+    || !preg_match('~^/tmp/(?:opencode/)?dctwpsollers-test-[^/]+/wordpress(?:-target)?$~D', realpath(ABSPATH) ?: ''))
 {
     throw new RuntimeException('Se rechaza limpiar una instalación ajena a estas pruebas.');
 }

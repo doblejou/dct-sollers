@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Migration_Package
+final class DCTWPSollers_Migration_Package
 {
     private const REQUIRED_TABLES = array
     (
@@ -48,7 +48,7 @@ final class DCTWPHero_Migration_Package
     public static function environment(): void
     {
         global $wpdb;
-        DCTWPHero_Migration_Database::identifier($wpdb->prefix);
+        DCTWPSollers_Migration_Database::identifier($wpdb->prefix);
         if (is_multisite() || PHP_INT_SIZE < 8 || !class_exists('ZipArchive') || !extension_loaded('mysqli'))
         {
             throw new RuntimeException('Se requiere WordPress individual, PHP de 64 bits, mysqli y ZipArchive.');
@@ -61,7 +61,7 @@ final class DCTWPHero_Migration_Package
             || wp_normalize_path(WP_PLUGIN_DIR) !== wp_normalize_path(WP_CONTENT_DIR . '/plugins')
             || wp_normalize_path(get_theme_root()) !== wp_normalize_path(WP_CONTENT_DIR . '/themes')
             || wp_normalize_path($uploads['basedir']) !== wp_normalize_path(WP_CONTENT_DIR . '/uploads')
-            || (defined('WPMU_PLUGIN_DIR') && !(defined('DCTWPHERO_MIGRATION_ISOLATED') && DCTWPHERO_MIGRATION_ISOLATED)
+            || (defined('WPMU_PLUGIN_DIR') && !(defined('DCTWPSOLLERS_MIGRATION_ISOLATED') && DCTWPSOLLERS_MIGRATION_ISOLATED)
                 && wp_normalize_path(WPMU_PLUGIN_DIR) !== wp_normalize_path(WP_CONTENT_DIR . '/mu-plugins')))
         {
             throw new RuntimeException('Esta versión requiere plugins, temas, mu-plugins y uploads en sus rutas estándar de wp-content.');
@@ -87,17 +87,17 @@ final class DCTWPHero_Migration_Package
             }
         }
 
-        DCTWPHero_Migration_Files::directory($directory . '/database', 0700);
+        DCTWPSollers_Migration_Files::directory($directory . '/database', 0700);
 
         $manifest = array();
-        $manifest['format'] = 'dctwphero';
+        $manifest['format'] = 'dctwpsollers';
         $manifest['version'] = 1;
         $manifest['created'] = gmdate('c');
         $manifest['context'] = self::context();
         $manifest['prefix'] = $wpdb->prefix;
         $manifest['excluded_paths'] = $excluded;
         $manifest['excluded_tables'] = array_map(static fn(string $table): string => substr($table, strlen($wpdb->prefix)), $excluded_tables);
-        $manifest['tables'] = DCTWPHero_Migration_Database::export($directory, $excluded_tables);
+        $manifest['tables'] = DCTWPSollers_Migration_Database::export($directory, $excluded_tables);
         $manifest['entries'] = array();
         $zip = new ZipArchive();
 
@@ -115,7 +115,7 @@ final class DCTWPHero_Migration_Package
 
             WP_CLI::log('Preparando archivos de wp-content…');
 
-            foreach (DCTWPHero_Migration_Files::inventory(WP_CONTENT_DIR, $excluded) as $path => $source)
+            foreach (DCTWPSollers_Migration_Files::inventory(WP_CONTENT_DIR, $excluded) as $path => $source)
             {
                 $entry = 'content/' . $path;
                 $prepared = $directory . '/' . $entry;
@@ -126,7 +126,7 @@ final class DCTWPHero_Migration_Package
                     throw new RuntimeException('Espacio insuficiente para preparar los archivos de exportación.');
                 }
 
-                DCTWPHero_Migration_Files::directory($parent, 0700);
+                DCTWPSollers_Migration_Files::directory($parent, 0700);
 
                 if (!copy($source, $prepared))
                 {
@@ -172,7 +172,7 @@ final class DCTWPHero_Migration_Package
         $metadata = array();
         $metadata['size'] = filesize($file);
         $metadata['sha256'] = hash_file('sha256', $file);
-        $metadata['mode'] = DCTWPHero_Migration_Files::mode(fileperms($original ?? $file) & 0755);
+        $metadata['mode'] = DCTWPSollers_Migration_Files::mode(fileperms($original ?? $file) & 0755);
         $metadata['mtime'] = filemtime($original ?? $file);
 
         if ($metadata['size'] === false || $metadata['sha256'] === false || !$zip->addFile($file, $entry))
@@ -216,7 +216,7 @@ final class DCTWPHero_Migration_Package
             for ($index = 0; $index < $zip->numFiles; $index++)
             {
                 $stat = $zip->statIndex($index);
-                $entry = DCTWPHero_Migration_Files::path($stat['name']);
+                $entry = DCTWPSollers_Migration_Files::path($stat['name']);
                 $folded = strtolower($entry);
                 $system = 0;
                 $attributes = 0;
@@ -251,10 +251,10 @@ final class DCTWPHero_Migration_Package
 
             foreach ($manifest['entries'] as $entry => $metadata)
             {
-                $target = DCTWPHero_Migration_Files::destination($directory, $entry);
+                $target = DCTWPSollers_Migration_Files::destination($directory, $entry);
                 $parent = dirname($target);
 
-                DCTWPHero_Migration_Files::directory($parent, 0700);
+                DCTWPSollers_Migration_Files::directory($parent, 0700);
 
                 $source = $zip->getStream($entry);
                 // Exclusive local stream in validated private staging; extraction stays bounded by the manifest size.
@@ -316,7 +316,7 @@ final class DCTWPHero_Migration_Package
     ################################################
     public static function validate(mixed $manifest): void
     {
-        if (!is_array($manifest) || ($manifest['format'] ?? null) !== 'dctwphero' || ($manifest['version'] ?? null) !== 1)
+        if (!is_array($manifest) || ($manifest['format'] ?? null) !== 'dctwpsollers' || ($manifest['version'] ?? null) !== 1)
         {
             throw new RuntimeException('Formato de paquete no compatible.');
         }
@@ -346,7 +346,7 @@ final class DCTWPHero_Migration_Package
             throw new RuntimeException('Prefijo de origen inválido.');
         }
 
-        DCTWPHero_Migration_Database::identifier($manifest['prefix']);
+        DCTWPSollers_Migration_Database::identifier($manifest['prefix']);
 
         $keys = array
         (
@@ -389,7 +389,7 @@ final class DCTWPHero_Migration_Package
         {
             if (isset($manifest['context'][$key]) && $manifest['context'][$key] !== '')
             {
-                DCTWPHero_Migration_Values::url($manifest['context'][$key]);
+                DCTWPSollers_Migration_Values::url($manifest['context'][$key]);
             }
         }
 
@@ -413,7 +413,7 @@ final class DCTWPHero_Migration_Package
                 throw new RuntimeException('Exclusión de ruta inválida.');
             }
 
-            DCTWPHero_Migration_Files::path($path);
+            DCTWPSollers_Migration_Files::path($path);
         }
 
         foreach ($manifest['excluded_tables'] as $suffix)
@@ -423,7 +423,7 @@ final class DCTWPHero_Migration_Package
                 throw new RuntimeException('Exclusión de tabla inválida.');
             }
 
-            DCTWPHero_Migration_Database::identifier($suffix);
+            DCTWPSollers_Migration_Database::identifier($suffix);
         }
 
         foreach (self::REQUIRED_TABLES as $required)
@@ -436,7 +436,7 @@ final class DCTWPHero_Migration_Package
 
         foreach ($manifest['tables'] as $suffix => $entry)
         {
-            DCTWPHero_Migration_Database::identifier((string) $suffix);
+            DCTWPSollers_Migration_Database::identifier((string) $suffix);
 
             if ($entry !== 'database/' . $suffix . '.ndjson' || !isset($manifest['entries'][$entry])
                 || in_array($suffix, $manifest['excluded_tables'], true))
@@ -452,7 +452,7 @@ final class DCTWPHero_Migration_Package
                 throw new RuntimeException('Nombre de entrada inválido.');
             }
 
-            DCTWPHero_Migration_Files::path($entry);
+            DCTWPSollers_Migration_Files::path($entry);
 
             if (!is_array($metadata) || !is_int($metadata['size'] ?? null) || $metadata['size'] < 0
                 || !is_string($metadata['sha256'] ?? null) || !preg_match('/^[a-f0-9]{64}$/D', $metadata['sha256']))
@@ -462,7 +462,7 @@ final class DCTWPHero_Migration_Package
 
             if (array_key_exists('mode', $metadata))
             {
-                DCTWPHero_Migration_Files::mode($metadata['mode']);
+                DCTWPSollers_Migration_Files::mode($metadata['mode']);
             }
 
             if (array_key_exists('mtime', $metadata) && !is_int($metadata['mtime']))
@@ -472,7 +472,7 @@ final class DCTWPHero_Migration_Package
 
             if (str_starts_with($entry, 'content/'))
             {
-                if (DCTWPHero_Migration_Files::excluded(substr($entry, 8), $manifest['excluded_paths']))
+                if (DCTWPSollers_Migration_Files::excluded(substr($entry, 8), $manifest['excluded_paths']))
                 {
                     throw new RuntimeException('El paquete contiene una ruta declarada excluida.');
                 }

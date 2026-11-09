@@ -1,6 +1,6 @@
 <?php
 
-final class DCTWPHero_Checks
+final class DCTWPSollers_Checks
 {
     private static int $count = 0;
 

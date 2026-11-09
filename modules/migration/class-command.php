@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Migration_Command
+final class DCTWPSollers_Migration_Command
 {
     ################################################
     #
@@ -12,7 +12,7 @@ final class DCTWPHero_Migration_Command
     #
     ################################################
     /**
-     * Exporta el sitio a un ZIP propio de DCT WP Hero.
+     * Exporta el sitio a un ZIP propio de DCTWP Sollers.
      *
      * ## OPTIONS
      *
@@ -27,7 +27,7 @@ final class DCTWPHero_Migration_Command
      */
     public static function export(array $args, array $options): void
     {
-        $operation = new DCTWPHero_Migration_Operation();
+        $operation = new DCTWPSollers_Migration_Operation();
 
         try
         {
@@ -39,26 +39,26 @@ final class DCTWPHero_Migration_Command
 
             );
             self::arguments($args, $options, $allowed);
-            DCTWPHero_Migration_Package::environment();
+            DCTWPSollers_Migration_Package::environment();
             $output = self::output($options['file']);
-            $excluded = array_values(array_unique(array_merge(DCTWPHero_Migration_Files::exclusions(), self::list($options['exclude'] ?? ''))));
+            $excluded = array_values(array_unique(array_merge(DCTWPSollers_Migration_Files::exclusions(), self::list($options['exclude'] ?? ''))));
 
             foreach ($excluded as $path)
             {
-                DCTWPHero_Migration_Files::path($path);
+                DCTWPSollers_Migration_Files::path($path);
             }
 
             $tables = self::list($options['exclude-tables'] ?? '');
             $directory = $operation->start();
             $temporary = $operation->archive($output);
             WP_CLI::warning('Evita escrituras durante la exportación. La copia no es atómica entre archivos y base de datos.');
-            DCTWPHero_Migration_Package::create($directory, $temporary, $excluded, $tables);
+            DCTWPSollers_Migration_Package::create($directory, $temporary, $excluded, $tables);
             $operation->assert_locked();
             $validation = $directory . '/verification';
 
-            DCTWPHero_Migration_Files::directory($validation, 0700);
+            DCTWPSollers_Migration_Files::directory($validation, 0700);
 
-            DCTWPHero_Migration_Package::extract($temporary, $validation);
+            DCTWPSollers_Migration_Package::extract($temporary, $validation);
             $operation->assert_locked();
 
             // Publish a verified private ZIP without ever replacing an existing target; link() has no overwrite fallback.
@@ -105,7 +105,7 @@ final class DCTWPHero_Migration_Command
      * ## OPTIONS
      *
      * --file=<path>
-     * : Ruta absoluta de un ZIP propio de DCT WP Hero.
+     * : Ruta absoluta de un ZIP propio de DCTWP Sollers.
      *
      * --mode=<mode>
      * : merge conserva archivos y tablas extra; mirror elimina extras no excluidos.
@@ -131,7 +131,7 @@ final class DCTWPHero_Migration_Command
     {
         global $wp_version;
         $maintenance = false;
-        $operation = new DCTWPHero_Migration_Operation();
+        $operation = new DCTWPSollers_Migration_Operation();
         $database = $operation->database();
 
         try
@@ -147,7 +147,7 @@ final class DCTWPHero_Migration_Command
 
             );
             self::arguments($args, $options, $allowed);
-            DCTWPHero_Migration_Package::environment();
+            DCTWPSollers_Migration_Package::environment();
 
             if (($options['mode'] ?? null) !== 'merge' && ($options['mode'] ?? null) !== 'mirror')
             {
@@ -168,13 +168,13 @@ final class DCTWPHero_Migration_Command
 
             if (!isset($options['dry-run']))
             {
-                DCTWPHero_Migration_Process::isolate($options);
+                DCTWPSollers_Migration_Process::isolate($options);
             }
 
-            $target = DCTWPHero_Migration_Import::target($options);
+            $target = DCTWPSollers_Migration_Import::target($options);
             $directory = $operation->start();
             WP_CLI::log('Validando ZIP, inventario e integridad…');
-            $manifest = DCTWPHero_Migration_Package::extract($file, $directory);
+            $manifest = DCTWPSollers_Migration_Package::extract($file, $directory);
 
             if (version_compare($manifest['context']['wordpress'], $wp_version, '>'))
             {
@@ -186,7 +186,7 @@ final class DCTWPHero_Migration_Command
                 WP_CLI::warning('El origen usa una versión de PHP posterior. Comprueba la compatibilidad de sus plugins.');
             }
 
-            $plan = DCTWPHero_Migration_Import::plan($directory, $manifest, $target, $options['mode'], $database);
+            $plan = DCTWPSollers_Migration_Import::plan($directory, $manifest, $target, $options['mode'], $database);
             WP_CLI::log('Tablas incluidas: ' . count($manifest['tables']));
             WP_CLI::log('Archivos a sustituir/crear: ' . count($plan['files']['write']));
             WP_CLI::log('Archivos extra a eliminar: ' . count($plan['files']['delete']));
@@ -229,7 +229,7 @@ final class DCTWPHero_Migration_Command
                 $operation->assert_locked();
                 WP_CLI::log('Restaurando archivos…');
 
-                DCTWPHero_Migration_Import::restore_files($directory, $manifest, $plan['files']);
+                DCTWPSollers_Migration_Import::restore_files($directory, $manifest, $plan['files']);
                 $operation->assert_locked();
                 $database->publish($plan['existing'], $manifest['excluded_tables'], $options['mode']);
                 self::finalize($target);
@@ -279,7 +279,7 @@ final class DCTWPHero_Migration_Command
     {
         if ($args !== array() || array_diff(array_keys($options), $allowed) !== array())
         {
-            throw new RuntimeException('Argumentos no reconocidos. Consulta wp help dctwphero export/import.');
+            throw new RuntimeException('Argumentos no reconocidos. Consulta wp help dctwpsollers export/import.');
         }
 
         if (!is_string($options['file'] ?? null) || !str_starts_with($options['file'], '/') || str_contains($options['file'], "\0"))

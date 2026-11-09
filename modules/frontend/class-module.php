@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Frontend_Module
+final class DCTWPSollers_Frontend_Module
 {
     ################################################
     #
@@ -34,7 +34,7 @@ final class DCTWPHero_Frontend_Module
             return;
         }
 
-        $settings = DCTWPHero_Frontend_Settings::get();
+        $settings = DCTWPSollers_Frontend_Settings::get();
 
         if ($settings['emojis'])
         {
@@ -128,7 +128,7 @@ final class DCTWPHero_Frontend_Module
     ################################################
     public static function resource_hints(array $urls, string $relation): array
     {
-        $settings = DCTWPHero_Frontend_Settings::get();
+        $settings = DCTWPSollers_Frontend_Settings::get();
 
         if ($relation === 'dns-prefetch' && $settings['emojis'])
         {
@@ -179,7 +179,7 @@ final class DCTWPHero_Frontend_Module
     ################################################
     public static function preload_resources(array $resources): array
     {
-        $settings = DCTWPHero_Frontend_Settings::get();
+        $settings = DCTWPSollers_Frontend_Settings::get();
 
         if ($settings['fonts'] !== '')
         {

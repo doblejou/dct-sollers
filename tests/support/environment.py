@@ -26,7 +26,7 @@ def run(arguments, expected=0, stdin=None):
 
 def cleanup(project, fixture, installations):
     fixture = Path(fixture).resolve()
-    if fixture.parent not in (Path('/tmp'), Path('/tmp/opencode')) or not re.fullmatch(r'dctwphero-test-[^/]+', fixture.name):
+    if fixture.parent not in (Path('/tmp'), Path('/tmp/opencode')) or not re.fullmatch(r'dctwpsollers-test-[^/]+', fixture.name):
         raise RuntimeError('Se rechaza limpiar un directorio ajeno a estas pruebas.')
     for installation in installations:
         result = subprocess.run(['wp', f'--path={installation}', '--skip-plugins', '--skip-themes',
@@ -45,7 +45,7 @@ def web_site(source, host, project, theme_fixture):
     if not host.endswith('.local') or socket.gethostbyname(host) != '127.0.0.1':
         raise ValueError('--http-host debe ser un host .local que resuelva a 127.0.0.1')
     temporary = '/tmp/opencode' if os.access('/tmp/opencode', os.W_OK) else '/tmp'
-    fixture = Path(tempfile.mkdtemp(prefix='dctwphero-test-', dir=temporary))
+    fixture = Path(tempfile.mkdtemp(prefix='dctwpsollers-test-', dir=temporary))
     root = fixture / 'wordpress'
     root.mkdir()
     ready = []
@@ -61,7 +61,7 @@ def web_site(source, host, project, theme_fixture):
             if file.name != 'wp-config.php':
                 shutil.copy2(file, root / file.name)
         content = root / 'wp-content'
-        shutil.copytree(project, content / 'plugins/dctwphero', ignore=shutil.ignore_patterns('.git', '.ai-rules', 'release', '__pycache__'))
+        shutil.copytree(project, content / 'plugins/dctwpsollers', ignore=shutil.ignore_patterns('.git', '.ai-rules', 'release', '__pycache__'))
         theme = content / 'themes/web-fixture'
         theme.mkdir(parents=True)
         (theme / 'style.css').write_text('/* Theme Name: Web Fixture */')
@@ -76,7 +76,7 @@ def web_site(source, host, project, theme_fixture):
         password = secrets.token_hex(20)
         wp('core', 'install', '--url=' + url, '--title=Plugin Test', '--admin_user=testadmin',
            '--admin_email=test@example.test', '--admin_password=' + password, '--skip-email')
-        wp('plugin', 'activate', 'dctwphero')
+        wp('plugin', 'activate', 'dctwpsollers')
         wp('theme', 'activate', 'web-fixture')
         wp('user', 'create', 'testsubscriber', 'subscriber@example.test', '--role=subscriber', '--user_pass=' + password)
         post = wp('post', 'create', '--post_status=publish', '--post_title=Fixture',

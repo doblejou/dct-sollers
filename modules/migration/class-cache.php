@@ -4,7 +4,7 @@ use Elementor\Plugin as ElementorPlugin;
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Migration_Cache
+final class DCTWPSollers_Migration_Cache
 {
     ################################################
     #

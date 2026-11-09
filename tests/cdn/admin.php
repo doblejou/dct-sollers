@@ -2,9 +2,9 @@
 
 // Comprueba el diagnóstico con respuestas simuladas: no accede a ningún CDN real.
 require_once dirname(__DIR__) . '/checks.php';
-$check = DCTWPHero_Checks::that(...);
-$settings = DCTWPHero_CDN_Settings::defaults();
-$check(!DCTWPHero_CDN_Admin::probe($settings)['success'], 'Sin dominio no hay comprobación remota');
+$check = DCTWPSollers_Checks::that(...);
+$settings = DCTWPSollers_CDN_Settings::defaults();
+$check(!DCTWPSollers_CDN_Admin::probe($settings)['success'], 'Sin dominio no hay comprobación remota');
 $settings['hostname'] = 'cdn.example.test';
 $calls = 0;
 $status = 200;
@@ -33,18 +33,18 @@ add_filter('pre_http_request', $intercept, 10, 3);
 
 try
 {
-    $check(DCTWPHero_CDN_Admin::probe($settings)['success'], 'HTTP 200 informa de éxito limitado');
+    $check(DCTWPSollers_CDN_Admin::probe($settings)['success'], 'HTTP 200 informa de éxito limitado');
 
     foreach (array(301, 403, 404, 405, 500) as $status)
     {
-        $result = DCTWPHero_CDN_Admin::probe($settings);
+        $result = DCTWPSollers_CDN_Admin::probe($settings);
         $check(!$result['success'] && str_contains($result['message'], (string) $status), 'Respuesta no satisfactoria no se anuncia como éxito');
     }
 
     $failure = true;
-    $check(!DCTWPHero_CDN_Admin::probe($settings)['success'], 'Error de red controlado');
+    $check(!DCTWPSollers_CDN_Admin::probe($settings)['success'], 'Error de red controlado');
     $check($calls === 7, 'Número de llamadas explícitas esperado');
-    DCTWPHero_Checks::report();
+    DCTWPSollers_Checks::report();
 }
 finally
 {

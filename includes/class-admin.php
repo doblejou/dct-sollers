@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Admin
+final class DCTWPSollers_Admin
 {
     ################################################
     #
@@ -13,7 +13,7 @@ final class DCTWPHero_Admin
     ################################################
     public static function menu(): void
     {
-        $hook = add_options_page('DCT WP Hero', 'DCT WP Hero', 'manage_options', 'dctwphero', self::render(...));
+        $hook = add_options_page('DCTWP Sollers', 'DCTWP Sollers', 'manage_options', 'dctwpsollers', self::render(...));
         add_action('admin_print_styles-' . $hook, self::enqueue_styles(...));
     }
 
@@ -27,7 +27,7 @@ final class DCTWPHero_Admin
     public static function enqueue_styles(): void
     {
         $file = dirname(__DIR__) . '/assets/admin.css';
-        wp_enqueue_style('dctwphero-admin', plugins_url('assets/admin.css', dirname(__DIR__) . '/dctwphero.php'), array(), (string) filemtime($file));
+        wp_enqueue_style('dctwpsollers-admin', plugins_url('assets/admin.css', dirname(__DIR__) . '/dctwpsollers.php'), array(), (string) filemtime($file));
     }
 
     ################################################
@@ -41,8 +41,8 @@ final class DCTWPHero_Admin
     {
         $modules = array();
         $modules['type'] = 'array';
-        $modules['sanitize_callback'] = 'DCTWPHero_Admin::sanitize_modules';
-        register_setting('dctwphero_modules', 'dctwphero_modules', $modules);
+        $modules['sanitize_callback'] = 'DCTWPSollers_Admin::sanitize_modules';
+        register_setting('dctwpsollers_modules', 'dctwpsollers_modules', $modules);
     }
 
     ################################################
@@ -57,11 +57,11 @@ final class DCTWPHero_Admin
         $result = array();
         $valid = is_array($input);
 
-        foreach (DCTWPHero::modules() as $id => $module)
+        foreach (DCTWPSollers::modules() as $id => $module)
         {
             $value = is_array($input) ? ($input[$id] ?? null) : null;
 
-            if (!DCTWPHero::valid_module_state($value))
+            if (!DCTWPSollers::valid_module_state($value))
             {
                 $valid = false;
             }
@@ -71,9 +71,9 @@ final class DCTWPHero_Admin
 
         if (!$valid || array_diff_key($input, $result) !== array())
         {
-            add_settings_error('dctwphero_modules', 'invalid_modules', __('Los estados de los módulos no son válidos.', 'dctwphero'));
+            add_settings_error('dctwpsollers_modules', 'invalid_modules', __('Los estados de los módulos no son válidos.', 'dctwpsollers'));
 
-            return DCTWPHero::module_states();
+            return DCTWPSollers::module_states();
         }
 
         return $result;
@@ -90,11 +90,11 @@ final class DCTWPHero_Admin
     {
         if (!current_user_can('manage_options'))
         {
-            wp_die(esc_html__('No tienes permisos.', 'dctwphero'), '', 403);
+            wp_die(esc_html__('No tienes permisos.', 'dctwpsollers'), '', 403);
         }
 
-        $modules = DCTWPHero::modules();
-        $states = DCTWPHero::module_states();
+        $modules = DCTWPSollers::modules();
+        $states = DCTWPSollers::module_states();
         // Read-only navigation; no state changes, so a nonce is not required.
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $tab = isset($_GET['tab']) && is_string($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : 'modules';
@@ -106,7 +106,7 @@ final class DCTWPHero_Admin
 
         $headers = array();
         $headers['version'] = 'Version';
-        $plugin_data = get_file_data(dirname(__DIR__) . '/dctwphero.php', $headers);
+        $plugin_data = get_file_data(dirname(__DIR__) . '/dctwpsollers.php', $headers);
         $version = $plugin_data['version'];
 
         require dirname(__DIR__) . '/templates/admin.php';

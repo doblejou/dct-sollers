@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_CDN_Settings
+final class DCTWPSollers_CDN_Settings
 {
     ################################################
     #
@@ -109,7 +109,7 @@ final class DCTWPHero_CDN_Settings
     ################################################
     public static function get(): array
     {
-        $saved = get_option('dctwphero_cdn_settings', array());
+        $saved = get_option('dctwpsollers_cdn_settings', array());
 
         return is_array($saved) ? (self::validate(array_replace(self::defaults(), $saved)) ?? self::defaults()) : self::defaults();
     }

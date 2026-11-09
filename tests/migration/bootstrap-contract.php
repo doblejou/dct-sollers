@@ -47,10 +47,10 @@ final class WP_CLI
 
 }
 
-DCTWPHero_Checks::that(!function_exists('__return_false'), 'Prueba sin funciones auxiliares de WordPress');
+DCTWPSollers_Checks::that(!function_exists('__return_false'), 'Prueba sin funciones auxiliares de WordPress');
 require dirname(__DIR__, 2) . '/modules/migration/import-bootstrap.php';
-DCTWPHero_Checks::that(WP_CLI::$filters['enable_loading_object_cache_dropin'] === false, 'Desactiva object-cache antes de cargar WordPress');
-DCTWPHero_Checks::that(WP_CLI::$filters['enable_loading_advanced_cache_dropin'] === false, 'Desactiva advanced-cache antes de cargar WordPress');
-DCTWPHero_Checks::that(DCTWPHERO_MIGRATION_ISOLATED === true, 'Identifica el proceso aislado');
-DCTWPHero_Checks::that(is_callable(WP_CLI::$hooks['after_wp_load'] ?? null), 'Aplaza el registro del migrador hasta cargar WordPress');
-DCTWPHero_Checks::report();
+DCTWPSollers_Checks::that(WP_CLI::$filters['enable_loading_object_cache_dropin'] === false, 'Desactiva object-cache antes de cargar WordPress');
+DCTWPSollers_Checks::that(WP_CLI::$filters['enable_loading_advanced_cache_dropin'] === false, 'Desactiva advanced-cache antes de cargar WordPress');
+DCTWPSollers_Checks::that(DCTWPSOLLERS_MIGRATION_ISOLATED === true, 'Identifica el proceso aislado');
+DCTWPSollers_Checks::that(is_callable(WP_CLI::$hooks['after_wp_load'] ?? null), 'Aplaza el registro del migrador hasta cargar WordPress');
+DCTWPSollers_Checks::report();

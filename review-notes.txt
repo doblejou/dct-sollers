@@ -1,4 +1,4 @@
-DCT WP Hero - WordPress.org review notes
+DCTWP Sollers - WordPress.org review notes
 ======================================
 
 This document describes intentional implementation choices, not an approval by
@@ -150,6 +150,7 @@ silenced. These explanations apply to the current callers, not future code:
 * NonPrefixedVariableFound: finalize.php and verify.php are guarded CLI eval-file
   scripts. Their locals belong to WP-CLI's evaluation scope, not plugin globals
   exported during a normal WordPress HTTP bootstrap.
-* trademarked_term: Plugin Check's Trademarks_Check::TRADEMARK_SLUGS explicitly
-  comments that WP is allowed but still emits a warning. The
-  plugin name does not claim official affiliation; no WordPress logo is included.
+* trademarked_term: WP may produce an automated naming warning. DCTWP Sollers
+  does not claim affiliation with WordPress or Sollers Consulting and includes
+  no WordPress logo. The chosen name and slug still require directory review;
+  this note is not trademark clearance or approval.

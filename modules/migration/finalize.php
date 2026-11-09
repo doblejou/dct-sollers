@@ -4,44 +4,44 @@ defined('ABSPATH') || exit;
 defined('WP_CLI') && WP_CLI || exit;
 
 global $wpdb;
-$dctwphero_home = $args[0] ?? '';
-$dctwphero_site = $args[1] ?? '';
+$dctwpsollers_home = $args[0] ?? '';
+$dctwpsollers_site = $args[1] ?? '';
 
-if ($dctwphero_home === '' || $dctwphero_site === '')
+if ($dctwpsollers_home === '' || $dctwpsollers_site === '')
 {
     throw new RuntimeException('Faltan las URLs de finalización.');
 }
 
 wp_cache_flush();
-$dctwphero_settings = array();
-$dctwphero_settings['home'] = $dctwphero_home;
-$dctwphero_settings['siteurl'] = $dctwphero_site;
-$dctwphero_settings['upload_path'] = '';
-$dctwphero_settings['upload_url_path'] = '';
-$dctwphero_plugins = get_option('active_plugins', array());
+$dctwpsollers_settings = array();
+$dctwpsollers_settings['home'] = $dctwpsollers_home;
+$dctwpsollers_settings['siteurl'] = $dctwpsollers_site;
+$dctwpsollers_settings['upload_path'] = '';
+$dctwpsollers_settings['upload_url_path'] = '';
+$dctwpsollers_plugins = get_option('active_plugins', array());
 
-if (!is_array($dctwphero_plugins))
+if (!is_array($dctwpsollers_plugins))
 {
     throw new RuntimeException('La lista de plugins activos importada no es válida.');
 }
 
-$dctwphero_self = plugin_basename(dirname(__DIR__, 2) . '/dctwphero.php');
+$dctwpsollers_self = plugin_basename(dirname(__DIR__, 2) . '/dctwpsollers.php');
 
-if (!in_array($dctwphero_self, $dctwphero_plugins, true))
+if (!in_array($dctwpsollers_self, $dctwpsollers_plugins, true))
 {
-    $dctwphero_plugins[] = $dctwphero_self;
+    $dctwpsollers_plugins[] = $dctwpsollers_self;
 }
 
-$dctwphero_settings['active_plugins'] = $dctwphero_plugins;
+$dctwpsollers_settings['active_plugins'] = $dctwpsollers_plugins;
 
-foreach ($dctwphero_settings as $dctwphero_key => $dctwphero_value)
+foreach ($dctwpsollers_settings as $dctwpsollers_key => $dctwpsollers_value)
 {
-    update_option($dctwphero_key, $dctwphero_value);
-    $dctwphero_stored = $wpdb->get_var($wpdb->prepare('SELECT option_value FROM %i WHERE option_name = %s', $wpdb->options, $dctwphero_key));
+    update_option($dctwpsollers_key, $dctwpsollers_value);
+    $dctwpsollers_stored = $wpdb->get_var($wpdb->prepare('SELECT option_value FROM %i WHERE option_name = %s', $wpdb->options, $dctwpsollers_key));
 
-    $dctwphero_default_upload = $dctwphero_stored === null && $dctwphero_value === '' && ($dctwphero_key === 'upload_path' || $dctwphero_key === 'upload_url_path');
+    $dctwpsollers_default_upload = $dctwpsollers_stored === null && $dctwpsollers_value === '' && ($dctwpsollers_key === 'upload_path' || $dctwpsollers_key === 'upload_url_path');
 
-    if (!$dctwphero_default_upload && $dctwphero_stored !== maybe_serialize($dctwphero_value))
+    if (!$dctwpsollers_default_upload && $dctwpsollers_stored !== maybe_serialize($dctwpsollers_value))
     {
         throw new RuntimeException('No se ha podido guardar un ajuste final de la migración.');
     }

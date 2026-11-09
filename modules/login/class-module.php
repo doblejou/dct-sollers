@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Login_Module
+final class DCTWPSollers_Login_Module
 {
     ################################################
     #
@@ -13,16 +13,16 @@ final class DCTWPHero_Login_Module
     ################################################
     public static function initialize(): void
     {
-        if (!DCTWPHero_Store::upgrade())
+        if (!DCTWPSollers_Store::upgrade())
         {
             wp_die(
-                esc_html__('No se ha podido actualizar el almacenamiento de DCT WP Hero. Revisa el registro del servidor antes de reintentar.', 'dctwphero'),
-                esc_html__('Actualización pendiente', 'dctwphero'),
+                esc_html__('No se ha podido actualizar el almacenamiento de DCTWP Sollers. Revisa el registro del servidor antes de reintentar.', 'dctwpsollers'),
+                esc_html__('Actualización pendiente', 'dctwpsollers'),
                 503
             );
         }
 
-        add_action('dctwphero_cleanup', 'DCTWPHero_Store::cleanup');
+        add_action('dctwpsollers_cleanup', 'DCTWPSollers_Store::cleanup');
     }
 
     ################################################
@@ -36,9 +36,9 @@ final class DCTWPHero_Login_Module
     {
         self::initialize();
 
-        if (!wp_next_scheduled('dctwphero_cleanup'))
+        if (!wp_next_scheduled('dctwpsollers_cleanup'))
         {
-            wp_schedule_event(time() + HOUR_IN_SECONDS, 'hourly', 'dctwphero_cleanup');
+            wp_schedule_event(time() + HOUR_IN_SECONDS, 'hourly', 'dctwpsollers_cleanup');
         }
     }
 
@@ -51,7 +51,7 @@ final class DCTWPHero_Login_Module
     ################################################
     public static function deactivate(): void
     {
-        wp_clear_scheduled_hook('dctwphero_cleanup');
+        wp_clear_scheduled_hook('dctwpsollers_cleanup');
     }
 
     ################################################
@@ -95,7 +95,7 @@ final class DCTWPHero_Login_Module
     ################################################
     public static function check_access(): void
     {
-        if (!DCTWPHero::module_enabled('login'))
+        if (!DCTWPSollers::module_enabled('login'))
         {
             return;
         }
@@ -104,15 +104,15 @@ final class DCTWPHero_Login_Module
 
         if ($ip === '')
         {
-            wp_die(esc_html__('No se puede identificar la dirección del cliente.', 'dctwphero'), '', 403);
+            wp_die(esc_html__('No se puede identificar la dirección del cliente.', 'dctwpsollers'), '', 403);
         }
 
-        if (DCTWPHero_Store::blocked_until($ip) > time())
+        if (DCTWPSollers_Store::blocked_until($ip) > time())
         {
             nocache_headers();
             wp_die(
-                esc_html__('Acceso temporalmente bloqueado. Inténtalo más tarde.', 'dctwphero'),
-                esc_html__('Acceso denegado', 'dctwphero'),
+                esc_html__('Acceso temporalmente bloqueado. Inténtalo más tarde.', 'dctwpsollers'),
+                esc_html__('Acceso denegado', 'dctwpsollers'),
                 403
             );
         }
@@ -129,16 +129,16 @@ final class DCTWPHero_Login_Module
     {
         global $pagenow;
 
-        if (!DCTWPHero::module_enabled('login') || $pagenow !== 'wp-login.php' || !did_action('login_init'))
+        if (!DCTWPSollers::module_enabled('login') || $pagenow !== 'wp-login.php' || !did_action('login_init'))
         {
             return;
         }
 
         $ip = self::client_ip();
 
-        if ($ip !== '' && !DCTWPHero_Store::record_failure($ip, DCTWPHero_Login_Settings::get()))
+        if ($ip !== '' && !DCTWPSollers_Store::record_failure($ip, DCTWPSollers_Login_Settings::get()))
         {
-            error_log('DCT WP Hero: no se ha podido registrar un fallo de autenticación.');
+            error_log('DCTWP Sollers: no se ha podido registrar un fallo de autenticación.');
         }
     }
 }

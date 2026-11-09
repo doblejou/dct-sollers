@@ -3,7 +3,7 @@
 // Dobles de consulta: cubren rechazos sin necesitar permisos CREATE VIEW o TRIGGER.
 require_once dirname(__DIR__) . '/checks.php';
 
-final class DCTWPHero_Migration_Test_Database
+final class DCTWPSollers_Migration_Test_Database
 {
     public string $prefix = 'fixture_';
     public array $last_result = array();
@@ -93,7 +93,7 @@ final class DCTWPHero_Migration_Test_Database
         try
         {
             $test($wpdb);
-            DCTWPHero_Checks::that(!$wpdb->suppressed, 'Restaura la supresión de errores SQL');
+            DCTWPSollers_Checks::that(!$wpdb->suppressed, 'Restaura la supresión de errores SQL');
         }
         finally
         {
@@ -107,16 +107,16 @@ $table = array('fixture_posts', 'BASE TABLE');
 $view = array('fixture_view', 'VIEW');
 $responses = array();
 $responses[] = array('SHOW FULL TABLES', array($table, $view));
-DCTWPHero_Migration_Test_Database::run($responses, static function (): void
+DCTWPSollers_Migration_Test_Database::run($responses, static function (): void
 {
-    DCTWPHero_Checks::rejects(DCTWPHero_Migration_Database::tables(...), 'Rechaza vistas del prefijo');
+    DCTWPSollers_Checks::rejects(DCTWPSollers_Migration_Database::tables(...), 'Rechaza vistas del prefijo');
 });
 
 $responses = array();
 $responses[] = array('SHOW FULL TABLES', array($table, array('other_view', 'VIEW')));
-DCTWPHero_Migration_Test_Database::run($responses, static function (): void
+DCTWPSollers_Migration_Test_Database::run($responses, static function (): void
 {
-    DCTWPHero_Checks::that(DCTWPHero_Migration_Database::tables() === array('fixture_posts'), 'Ignora vistas de otros prefijos');
+    DCTWPSollers_Checks::that(DCTWPSollers_Migration_Database::tables() === array('fixture_posts'), 'Ignora vistas de otros prefijos');
 });
 
 $reference = array();
@@ -126,27 +126,27 @@ $reference['REFERENCED_TABLE_SCHEMA'] = DB_NAME;
 $reference['REFERENCED_TABLE_NAME'] = 'fixture_posts';
 $responses = array();
 $responses[] = array('SELECT TABLE_SCHEMA', array($reference));
-DCTWPHero_Migration_Test_Database::run($responses, static function (): void
+DCTWPSollers_Migration_Test_Database::run($responses, static function (): void
 {
-    DCTWPHero_Checks::rejects(static fn() => DCTWPHero_Migration_Database::foreign_boundary(array('fixture_posts')), 'Rechaza claves entrantes desde tablas conservadas');
+    DCTWPSollers_Checks::rejects(static fn() => DCTWPSollers_Migration_Database::foreign_boundary(array('fixture_posts')), 'Rechaza claves entrantes desde tablas conservadas');
 });
 
 $reference['TABLE_NAME'] = 'fixture_posts';
 $reference['REFERENCED_TABLE_SCHEMA'] = DB_NAME . '_external';
 $responses = array();
 $responses[] = array('SELECT TABLE_SCHEMA', array($reference));
-DCTWPHero_Migration_Test_Database::run($responses, static function (): void
+DCTWPSollers_Migration_Test_Database::run($responses, static function (): void
 {
-    DCTWPHero_Checks::rejects(static fn() => DCTWPHero_Migration_Database::foreign_boundary(array('fixture_posts')), 'Rechaza referencias a otras bases aunque coincida el nombre de tabla');
+    DCTWPSollers_Checks::rejects(static fn() => DCTWPSollers_Migration_Database::foreign_boundary(array('fixture_posts')), 'Rechaza referencias a otras bases aunque coincida el nombre de tabla');
 });
 
 $reference['REFERENCED_TABLE_SCHEMA'] = DB_NAME;
 $responses = array();
 $responses[] = array('SELECT TABLE_SCHEMA', array($reference));
-DCTWPHero_Migration_Test_Database::run($responses, static function (): void
+DCTWPSollers_Migration_Test_Database::run($responses, static function (): void
 {
-    DCTWPHero_Migration_Database::foreign_boundary(array('fixture_posts'));
-    DCTWPHero_Checks::that(true, 'Admite relaciones internas y autorreferencias');
+    DCTWPSollers_Migration_Database::foreign_boundary(array('fixture_posts'));
+    DCTWPSollers_Checks::that(true, 'Admite relaciones internas y autorreferencias');
 });
 
 $schema = array();
@@ -157,16 +157,16 @@ $trigger['Trigger'] = 'fixture_trigger';
 $responses = array();
 $responses[] = array('SHOW CREATE TABLE', array($schema));
 $responses[] = array('SHOW TRIGGERS', array($trigger));
-DCTWPHero_Migration_Test_Database::run($responses, static function (): void
+DCTWPSollers_Migration_Test_Database::run($responses, static function (): void
 {
-    DCTWPHero_Checks::rejects(static fn() => DCTWPHero_Migration_Database::schema('fixture_posts'), 'Rechaza triggers');
+    DCTWPSollers_Checks::rejects(static fn() => DCTWPSollers_Migration_Database::schema('fixture_posts'), 'Rechaza triggers');
 });
 
 $responses = array();
 $responses[] = array('FAIL', false);
-DCTWPHero_Migration_Test_Database::run($responses, static function (): void
+DCTWPSollers_Migration_Test_Database::run($responses, static function (): void
 {
-    DCTWPHero_Checks::rejects(static fn() => DCTWPHero_Migration_Database::query('FAIL'), 'Propaga errores SQL sin datos de consulta');
+    DCTWPSollers_Checks::rejects(static fn() => DCTWPSollers_Migration_Database::query('FAIL'), 'Propaga errores SQL sin datos de consulta');
 });
 
 foreach (array(0, 1) as $checks)
@@ -177,12 +177,12 @@ foreach (array(0, 1) as $checks)
     $responses[] = array('DROP TABLE IF EXISTS', false);
     $responses[] = array('SET SESSION FOREIGN_KEY_CHECKS = ' . $checks, array());
     $responses[] = array('AFTER RESTORE', array());
-    DCTWPHero_Migration_Test_Database::run($responses, static function (): void
+    DCTWPSollers_Migration_Test_Database::run($responses, static function (): void
     {
-        $drop = new ReflectionMethod(DCTWPHero_Migration_Database::class, 'drop_tables');
-        DCTWPHero_Checks::rejects(static fn() => $drop->invoke(null, array('fixture_posts')), 'Propaga un fallo de borrado con claves externas');
-        DCTWPHero_Migration_Database::query('AFTER RESTORE');
-        DCTWPHero_Checks::that(true, 'Restaura FOREIGN_KEY_CHECKS incluso cuando falla DROP');
+        $drop = new ReflectionMethod(DCTWPSollers_Migration_Database::class, 'drop_tables');
+        DCTWPSollers_Checks::rejects(static fn() => $drop->invoke(null, array('fixture_posts')), 'Propaga un fallo de borrado con claves externas');
+        DCTWPSollers_Migration_Database::query('AFTER RESTORE');
+        DCTWPSollers_Checks::that(true, 'Restaura FOREIGN_KEY_CHECKS incluso cuando falla DROP');
     });
 }
 
@@ -211,12 +211,12 @@ foreach (array('set', 'clamp', 'busy') as $failure)
     $responses[] = array('SELECT CONNECTION_ID() AS connection_id', array($session));
     $responses[] = array('SET SESSION wait_timeout = 30', array());
     $responses[] = array('AFTER RESTORE', array());
-    DCTWPHero_Migration_Test_Database::run($responses, static function (): void
+    DCTWPSollers_Migration_Test_Database::run($responses, static function (): void
     {
-        $operation = new DCTWPHero_Migration_Operation();
-        DCTWPHero_Checks::rejects($operation->start(...), 'Rechaza inicio sin timeout suficiente o con bloqueo ocupado');
-        DCTWPHero_Checks::that($operation->finish(null) === null, 'Restaura el timeout incluso si no llegó a adquirir el bloqueo');
-        DCTWPHero_Migration_Database::query('AFTER RESTORE');
+        $operation = new DCTWPSollers_Migration_Operation();
+        DCTWPSollers_Checks::rejects($operation->start(...), 'Rechaza inicio sin timeout suficiente o con bloqueo ocupado');
+        DCTWPSollers_Checks::that($operation->finish(null) === null, 'Restaura el timeout incluso si no llegó a adquirir el bloqueo');
+        DCTWPSollers_Migration_Database::query('AFTER RESTORE');
     });
 }
 
@@ -230,9 +230,9 @@ foreach (array('release', 'timeout') as $failure)
     $responses[] = array('SELECT CONNECTION_ID() AS connection_id', array($session));
     $responses[] = array('SET SESSION wait_timeout = 30', $failure === 'timeout' ? false : array());
     $responses[] = array('AFTER RESTORE', array());
-    DCTWPHero_Migration_Test_Database::run($responses, static function () use ($failure): void
+    DCTWPSollers_Migration_Test_Database::run($responses, static function () use ($failure): void
     {
-        $operation = new DCTWPHero_Migration_Operation();
+        $operation = new DCTWPSollers_Migration_Operation();
         $state = array();
         $state['locked'] = true;
         $state['connection_id'] = 101;
@@ -245,8 +245,8 @@ foreach (array('release', 'timeout') as $failure)
 
         $message = $operation->finish(null);
         $resource = $failure === 'release' ? 'bloqueo SQL' : 'timeout de sesión SQL';
-        DCTWPHero_Checks::that(is_string($message) && str_contains($message, $resource), 'Identifica el recurso SQL que no se pudo limpiar');
-        DCTWPHero_Migration_Database::query('AFTER RESTORE');
+        DCTWPSollers_Checks::that(is_string($message) && str_contains($message, $resource), 'Identifica el recurso SQL que no se pudo limpiar');
+        DCTWPSollers_Migration_Database::query('AFTER RESTORE');
     });
 }
 
@@ -274,32 +274,32 @@ foreach (array(0, 100, 201) as $count)
         }
     }
 
-    DCTWPHero_Migration_Test_Database::run($responses, static function () use ($expected): void
+    DCTWPSollers_Migration_Test_Database::run($responses, static function () use ($expected): void
     {
-        $rows = iterator_to_array(DCTWPHero_Migration_Database::export_rows('fixture_posts', array('value', 'nullable')));
+        $rows = iterator_to_array(DCTWPSollers_Migration_Database::export_rows('fixture_posts', array('value', 'nullable')));
         $expected = array_map(array_values(...), $expected);
-        DCTWPHero_Checks::that($rows === $expected, 'Exportación por lotes conserva duplicados, binarios y NULL sin clave primaria');
+        DCTWPSollers_Checks::that($rows === $expected, 'Exportación por lotes conserva duplicados, binarios y NULL sin clave primaria');
     });
 }
 
 $responses = array();
 $responses[] = array('SELECT `value` FROM `fixture_posts` USE INDEX () LIMIT 100 OFFSET 0', false);
-DCTWPHero_Migration_Test_Database::run($responses, static function (): void
+DCTWPSollers_Migration_Test_Database::run($responses, static function (): void
 {
-    DCTWPHero_Checks::rejects(static fn() => iterator_to_array(DCTWPHero_Migration_Database::export_rows('fixture_posts', array('value'))), 'Propaga errores al leer lotes de exportación');
-    DCTWPHero_Checks::rejects(static fn() => iterator_to_array(DCTWPHero_Migration_Database::export_rows('fixture_posts; DROP TABLE users', array('value'))), 'Rechaza identificadores de tabla antes de leer');
-    DCTWPHero_Checks::rejects(static fn() => iterator_to_array(DCTWPHero_Migration_Database::export_rows('fixture_posts', array('value; SELECT 1'))), 'Rechaza identificadores de columna antes de leer');
+    DCTWPSollers_Checks::rejects(static fn() => iterator_to_array(DCTWPSollers_Migration_Database::export_rows('fixture_posts', array('value'))), 'Propaga errores al leer lotes de exportación');
+    DCTWPSollers_Checks::rejects(static fn() => iterator_to_array(DCTWPSollers_Migration_Database::export_rows('fixture_posts; DROP TABLE users', array('value'))), 'Rechaza identificadores de tabla antes de leer');
+    DCTWPSollers_Checks::rejects(static fn() => iterator_to_array(DCTWPSollers_Migration_Database::export_rows('fixture_posts', array('value; SELECT 1'))), 'Rechaza identificadores de columna antes de leer');
 });
 
 foreach (array(0, 1) as $warnings)
 {
     $responses = array();
     $responses[] = array('SHOW COUNT(*) WARNINGS', array(array('@@session.warning_count' => $warnings)));
-    DCTWPHero_Migration_Test_Database::run($responses, static function () use ($warnings): void
+    DCTWPSollers_Migration_Test_Database::run($responses, static function () use ($warnings): void
     {
-        $method = new ReflectionMethod(DCTWPHero_Migration_Database::class, 'warning_count');
-        DCTWPHero_Checks::that($method->invoke(null) === $warnings, 'Lee avisos SQL mediante wpdb');
+        $method = new ReflectionMethod(DCTWPSollers_Migration_Database::class, 'warning_count');
+        DCTWPSollers_Checks::that($method->invoke(null) === $warnings, 'Lee avisos SQL mediante wpdb');
     });
 }
 
-DCTWPHero_Checks::report();
+DCTWPSollers_Checks::report();

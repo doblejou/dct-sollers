@@ -48,7 +48,7 @@ def main():
     for helper in ('import-bootstrap.php', 'finalize.php', 'verify.php', 'flush-cache.php'):
         assert run(['php', str(project / 'modules/migration' / helper)]) == '', 'Acceso directo sin WordPress ni WP_CLI no ejecuta operaciones'
     temporary = '/tmp/opencode' if os.access('/tmp/opencode', os.W_OK) else tempfile.gettempdir()
-    fixture = Path(tempfile.mkdtemp(prefix='dctwphero-test-', dir=temporary))
+    fixture = Path(tempfile.mkdtemp(prefix='dctwpsollers-test-', dir=temporary))
     prefix = 'dcttest_' + secrets.token_hex(6) + '_'
     wp_root = fixture / 'wordpress'
     wp_root.mkdir()
@@ -65,7 +65,7 @@ def main():
             if file.name != 'wp-config.php':
                 shutil.copy2(file, wp_root / file.name)
         content = wp_root / 'wp-content'
-        plugin = content / 'plugins' / 'dctwphero'
+        plugin = content / 'plugins' / 'dctwpsollers'
         shutil.copytree(project, plugin, ignore=shutil.ignore_patterns('.ai-rules', 'release', '__pycache__'))
         (content / 'themes').mkdir()
         (content / 'uploads').mkdir()
@@ -73,12 +73,12 @@ def main():
         ready.append(wp_root)
         wp('core', 'install', '--url=http://origin.test', '--title=Migration test', '--admin_user=testadmin',
            '--admin_email=test@example.test', '--admin_password=' + secrets.token_hex(20), '--skip-email')
-        wp('plugin', 'activate', 'dctwphero')
+        wp('plugin', 'activate', 'dctwpsollers')
         for script in ('migration/values.php', 'migration/libraries.php', 'migration/database-contract.php',
                        'migration/cache.php', 'modules.php', 'lifecycle.php', 'login/settings.php', 'login/store.php',
                        'login/store-contract.php', 'login/migrations.php'):
             print(wp('eval-file', str(project / 'tests' / script)))
-        wp('help', 'dctwphero', 'export', '--format=json')
+        wp('help', 'dctwpsollers', 'export', '--format=json')
         sql_literal = b'\x00\xff\'"\\`; DROP TABLE users; -- %s %i\n'
         wp('eval', 'global $wpdb; $wpdb->query("CREATE TABLE `{$wpdb->prefix}fixture` '
            '(id int PRIMARY KEY, value longblob, amount decimal(20,4) DEFAULT 0, nullable text NULL, '
@@ -117,17 +117,17 @@ def main():
         (content / 'uploads' / 'private' / 'keep.txt').write_text('private original')
         archive = fixture / 'backup.zip'
         create_foreign_keys(wp)
-        wp('dctwphero', 'export', f'--file={archive}', '--exclude=cache,uploads/private', f'--exclude-tables={prefix}preserved')
+        wp('dctwpsollers', 'export', f'--file={archive}', '--exclude=cache,uploads/private', f'--exclude-tables={prefix}preserved')
         assert archive.stat().st_mode & 0o077 == 0, 'ZIP con permisos privados'
         with zipfile.ZipFile(archive) as package:
             manifest = json.loads(package.read('manifest.json'))
-            assert manifest['format'] == 'dctwphero'
-            assert not any(name.startswith('content/plugins/dctwphero/') for name in package.namelist())
+            assert manifest['format'] == 'dctwpsollers'
+            assert not any(name.startswith('content/plugins/dctwpsollers/') for name in package.namelist())
             heap = package.read('database/fixture_heap.ndjson').splitlines()
             assert len(heap) == 206 and all(json.loads(row) == ['AP8=', None] for row in heap[1:]), 'Lotes reales conservan 205 filas duplicadas, binarios y NULL sin PK'
-        wp('dctwphero', 'export', f'--file={archive}', expected=1)
-        wp('dctwphero', 'export', f'--file={content}/bad.zip', expected=1)
-        wp('dctwphero', 'import', f'--file={archive}', expected=1)
+        wp('dctwpsollers', 'export', f'--file={archive}', expected=1)
+        wp('dctwpsollers', 'export', f'--file={content}/bad.zip', expected=1)
+        wp('dctwpsollers', 'import', f'--file={archive}', expected=1)
         argument_scenarios(wp, archive, fixture, content)
         package_scenarios(wp, archive, fixture)
         database_failures(wp, archive, fixture, content)
@@ -141,7 +141,7 @@ def main():
                 metadata.pop('mtime', None)
 
         rewrite_package(archive, legacy, legacy_metadata)
-        wp('dctwphero', 'import', f'--file={legacy}', '--mode=merge', '--yes')
+        wp('dctwpsollers', 'import', f'--file={legacy}', '--mode=merge', '--yes')
         verify_foreign_keys(wp)
         assert (content / 'uploads/fixture.txt').stat().st_mode & 0o777 == 0o644
         (content / 'uploads' / 'fixture.txt').write_text('changed')
@@ -149,23 +149,23 @@ def main():
         (content / 'uploads' / 'private' / 'keep.txt').write_text('private destination')
         wp('eval', 'global $wpdb; $wpdb->query("CREATE TABLE `{$wpdb->prefix}extra` (id int) ENGINE=InnoDB"); '
            '$wpdb->query("UPDATE `{$wpdb->prefix}preserved` SET id = 9");')
-        lock_code = ('global $wpdb; $key = "dct-migration-" . substr(hash("sha256", DB_NAME . ":" . $wpdb->prefix), 0, 40); '
+        lock_code = ('global $wpdb; $key = "dctwpsollers-migration-" . substr(hash("sha256", DB_NAME . ":" . $wpdb->prefix), 0, 40); '
                      'echo $wpdb->get_var($wpdb->prepare("SELECT GET_LOCK(%s, 0)", $key)) . "\\n"; flush(); sleep(20);')
         locker = subprocess.Popen(['wp', f'--path={wp_root}', 'eval', lock_code], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
         try:
             assert locker.stdout.readline().strip() == '1'
-            wp('dctwphero', 'export', f'--file={fixture}/locked.zip', expected=1)
+            wp('dctwpsollers', 'export', f'--file={fixture}/locked.zip', expected=1)
         finally:
             locker.terminate()
             locker.wait(timeout=10)
         before = wp('option', 'get', 'migration_fixture', '--format=json')
-        wp('dctwphero', 'import', f'--file={archive}', '--mode=mirror', '--dry-run')
+        wp('dctwpsollers', 'import', f'--file={archive}', '--mode=mirror', '--dry-run')
         assert (content / 'uploads' / 'fixture.txt').read_text() == 'changed'
         assert (content / 'uploads' / 'extra.txt').exists()
         assert wp('option', 'get', 'migration_fixture', '--format=json') == before
-        wp('dctwphero', 'import', f'--file={archive}', '--mode=merge', expected=1, stdin='n\n')
+        wp('dctwpsollers', 'import', f'--file={archive}', '--mode=merge', expected=1, stdin='n\n')
         assert not (wp_root / '.maintenance').exists()
-        wp('dctwphero', 'import', f'--file={archive}', '--mode=merge', '--yes', '--home-url=https://target.test/sub', '--site-url=https://target.test/sub/wp')
+        wp('dctwpsollers', 'import', f'--file={archive}', '--mode=merge', '--yes', '--home-url=https://target.test/sub', '--site-url=https://target.test/sub/wp')
         assert (content / 'uploads' / 'fixture.txt').read_text() == 'original'
         assert (content / 'uploads/fixture.txt').stat().st_mode & 0o777 == 0o750
         assert int((content / 'uploads/fixture.txt').stat().st_mtime) == 1700000000
@@ -183,7 +183,7 @@ def main():
                   'echo $r->amount . ":" . $r->large_number . ":" . $r->computed . ":" . (int) is_null($r->nullable);').strip() == '0.0000:18446744073709551615:2:1'
         assert hashlib.sha256(large.read_bytes()).hexdigest() == large_hash
         assert prefix + 'extra' in wp('db', 'tables', '--all-tables-with-prefix')
-        wp('dctwphero', 'import', f'--file={archive}', '--mode=mirror', '--yes')
+        wp('dctwpsollers', 'import', f'--file={archive}', '--mode=mirror', '--yes')
         verify_foreign_keys(wp)
         assert not (content / 'uploads' / 'extra.txt').exists()
         assert prefix + 'extra' not in wp('db', 'tables', '--all-tables-with-prefix')
@@ -198,7 +198,7 @@ def main():
                     for item in original.infolist():
                         data = b'tampered' if item.filename == 'content/uploads/fixture.txt' else original.read(item.filename)
                         modified.writestr(item, data)
-                wp('dctwphero', 'import', f'--file={malicious}', '--mode=mirror', '--dry-run', expected=1)
+                wp('dctwpsollers', 'import', f'--file={malicious}', '--mode=mirror', '--dry-run', expected=1)
                 continue
             shutil.copy2(archive, malicious)
             with zipfile.ZipFile(malicious, 'a') as package:
@@ -213,12 +213,12 @@ def main():
                     info.create_system = 3
                     info.external_attr = 0o120777 << 16
                     package.writestr(info, '/etc/passwd')
-            wp('dctwphero', 'import', f'--file={malicious}', '--mode=mirror', '--dry-run', expected=1)
-        wp('eval', '$m = get_option("dctwphero_modules", array()); $m["migration"] = 0; update_option("dctwphero_modules", $m);')
-        wp('dctwphero', 'export', f'--file={fixture}/disabled.zip', expected=1)
-        bootstrap = wp_root / 'wp-content/plugins/dctwphero/modules/migration/import-bootstrap.php'
-        wp('--skip-plugins', '--skip-themes', f'--require={bootstrap}', 'dctwphero', 'import', f'--file={archive}', '--mode=mirror', '--dry-run', expected=1)
-        wp('eval', '$m = get_option("dctwphero_modules", array()); $m["migration"] = 1; update_option("dctwphero_modules", $m);')
+            wp('dctwpsollers', 'import', f'--file={malicious}', '--mode=mirror', '--dry-run', expected=1)
+        wp('eval', '$m = get_option("dctwpsollers_modules", array()); $m["migration"] = 0; update_option("dctwpsollers_modules", $m);')
+        wp('dctwpsollers', 'export', f'--file={fixture}/disabled.zip', expected=1)
+        bootstrap = wp_root / 'wp-content/plugins/dctwpsollers/modules/migration/import-bootstrap.php'
+        wp('--skip-plugins', '--skip-themes', f'--require={bootstrap}', 'dctwpsollers', 'import', f'--file={archive}', '--mode=mirror', '--dry-run', expected=1)
+        wp('eval', '$m = get_option("dctwpsollers_modules", array()); $m["migration"] = 1; update_option("dctwpsollers_modules", $m);')
         destination = fixture / 'wordpress-target'
         shutil.copytree(wp_root, destination)
         destination_prefix = 'dcttest_' + secrets.token_hex(6) + '_'
@@ -227,10 +227,10 @@ def main():
         wp_root = destination
         wp('core', 'install', '--url=https://different.test', '--title=Destination', '--admin_user=destination',
            '--admin_email=destination@example.test', '--admin_password=' + secrets.token_hex(20), '--skip-email')
-        wp('plugin', 'activate', 'dctwphero')
+        wp('plugin', 'activate', 'dctwpsollers')
         wp('eval', 'global $wpdb; $wpdb->query("CREATE TABLE `{$wpdb->prefix}preserved` (id int) ENGINE=InnoDB"); '
            '$wpdb->query("INSERT INTO `{$wpdb->prefix}preserved` VALUES (11)");')
-        wp('dctwphero', 'import', f'--file={archive}', '--mode=mirror', '--yes')
+        wp('dctwpsollers', 'import', f'--file={archive}', '--mode=mirror', '--yes')
         restored = json.loads(wp('option', 'get', 'migration_fixture', '--format=json').splitlines()[0])
         verify_foreign_keys(wp)
         assert restored['url'] == 'https://different.test/image'
@@ -244,11 +244,11 @@ def main():
         failing = fixture / 'failing.zip'
         payload = b'<?php throw new RuntimeException("Fallo intencional de pruebas");'
         rewrite_package(archive, failing, lambda manifest, files: set_entry(manifest, files, 'content/mu-plugins/dct-fixture-failure.php', payload))
-        output = wp('dctwphero', 'import', f'--file={failing}', '--mode=merge', '--yes', expected=1)
+        output = wp('dctwpsollers', 'import', f'--file={failing}', '--mode=merge', '--yes', expected=1)
         assert 'mantenimiento' in output and (wp_root / '.maintenance').exists()
         (wp_root / 'wp-content/mu-plugins/dct-fixture-failure.php').unlink()
         (wp_root / '.maintenance').unlink()
-        wp('dctwphero', 'import', f'--file={archive}', '--mode=mirror', '--yes')
+        wp('dctwpsollers', 'import', f'--file={archive}', '--mode=mirror', '--yes')
         cache_scenarios(wp, wp_root, arguments.elementor_path, archive, fixture)
         if arguments.http_host:
             with socket.socket() as listener:
@@ -267,13 +267,13 @@ def main():
                         except OSError:
                             time.sleep(0.1)
                     probe = wp_root / 'migration-probe.php'
-                    probe.write_text('<?php require __DIR__ . "/wp-load.php"; echo class_exists("DCTWPHero_Migration_Command", false) ? "CLI_LOADED" : "CLI_NOT_LOADED";')
+                    probe.write_text('<?php require __DIR__ . "/wp-load.php"; echo class_exists("DCTWPSollers_Migration_Command", false) ? "CLI_LOADED" : "CLI_NOT_LOADED";')
                     with urllib.request.urlopen(f'http://127.0.0.1:{port}/migration-probe.php') as response:
                         assert response.read().decode().endswith('CLI_NOT_LOADED')
                     for script in ('finalize.php', 'verify.php', 'flush-cache.php', 'import-bootstrap.php', 'class-command.php'):
-                        with urllib.request.urlopen(f'http://127.0.0.1:{port}/wp-content/plugins/dctwphero/modules/migration/{script}') as response:
+                        with urllib.request.urlopen(f'http://127.0.0.1:{port}/wp-content/plugins/dctwpsollers/modules/migration/{script}') as response:
                             assert response.read() == b'', f'{script} no es un punto de entrada HTTP'
-                    probe.write_text('<?php define("WP_CLI", true); class WP_CLI {} require __DIR__ . "/wp-content/plugins/dctwphero/modules/migration/import-bootstrap.php"; echo "UNSAFE";')
+                    probe.write_text('<?php define("WP_CLI", true); class WP_CLI {} require __DIR__ . "/wp-content/plugins/dctwpsollers/modules/migration/import-bootstrap.php"; echo "UNSAFE";')
                     with urllib.request.urlopen(f'http://127.0.0.1:{port}/migration-probe.php') as response:
                         assert response.read() == b'', 'El bootstrap rechaza HTTP incluso con WP_CLI definido'
                     print(run(['python3', str(project / 'tests/login/integration.py'), '--wp-path', str(wp_root), '--url', url]))

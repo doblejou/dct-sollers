@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Migration_Import
+final class DCTWPSollers_Migration_Import
 {
     ################################################
     #
@@ -13,11 +13,11 @@ final class DCTWPHero_Migration_Import
     ################################################
     public static function target(array $options): array
     {
-        $target = DCTWPHero_Migration_Package::context();
+        $target = DCTWPSollers_Migration_Package::context();
         $original_site = $target['site'];
         $original_home = $target['home'];
-        $target['home'] = DCTWPHero_Migration_Values::url($options['home-url'] ?? $target['home']);
-        $target['site'] = DCTWPHero_Migration_Values::url($options['site-url'] ?? $target['site']);
+        $target['home'] = DCTWPSollers_Migration_Values::url($options['home-url'] ?? $target['home']);
+        $target['site'] = DCTWPSollers_Migration_Values::url($options['site-url'] ?? $target['site']);
         $original_urls = array();
         $original_urls[$original_site] = $target['site'];
         $original_urls[$original_home] ??= $target['home'];
@@ -45,19 +45,19 @@ final class DCTWPHero_Migration_Import
     #  Valida datos y destinos y prepara un plan sin cambiar archivos ni tablas del sitio.
     #
     ################################################
-    public static function plan(string $directory, array $manifest, array $target, string $mode, DCTWPHero_Migration_Database $database): array
+    public static function plan(string $directory, array $manifest, array $target, string $mode, DCTWPSollers_Migration_Database $database): array
     {
         global $wpdb;
-        $map = DCTWPHero_Migration_Values::map($manifest['context'], $target);
-        $existing = DCTWPHero_Migration_Database::tables();
+        $map = DCTWPSollers_Migration_Values::map($manifest['context'], $target);
+        $existing = DCTWPSollers_Migration_Database::tables();
 
         foreach ($existing as $table)
         {
-            DCTWPHero_Migration_Database::schema($table);
+            DCTWPSollers_Migration_Database::schema($table);
         }
 
-        $excluded = array_unique(array_merge($manifest['excluded_paths'], DCTWPHero_Migration_Files::exclusions()));
-        $files = DCTWPHero_Migration_Files::plan(WP_CONTENT_DIR, $manifest['entries'], $excluded, $mode);
+        $excluded = array_unique(array_merge($manifest['excluded_paths'], DCTWPSollers_Migration_Files::exclusions()));
+        $files = DCTWPSollers_Migration_Files::plan(WP_CONTENT_DIR, $manifest['entries'], $excluded, $mode);
 
         if (!wp_is_writable(ABSPATH))
         {
@@ -66,8 +66,8 @@ final class DCTWPHero_Migration_Import
 
         $database->prepare($directory, $manifest, $map, true);
         $included_tables = array_map(static fn(string $suffix): string => $wpdb->prefix . $suffix, array_keys($manifest['tables']));
-        $extra_tables = DCTWPHero_Migration_Database::extra_tables($existing, $included_tables, $manifest['excluded_tables'], $mode);
-        DCTWPHero_Migration_Database::foreign_boundary(array_merge($included_tables, $extra_tables));
+        $extra_tables = DCTWPSollers_Migration_Database::extra_tables($existing, $included_tables, $manifest['excluded_tables'], $mode);
+        DCTWPSollers_Migration_Database::foreign_boundary(array_merge($included_tables, $extra_tables));
 
         $plan = array();
         $plan['map'] = $map;
@@ -90,7 +90,7 @@ final class DCTWPHero_Migration_Import
         foreach ($files['write'] as $path)
         {
             $metadata = $manifest['entries']['content/' . $path];
-            DCTWPHero_Migration_Files::copy(
+            DCTWPSollers_Migration_Files::copy(
                 $directory . '/content/' . $path,
                 WP_CONTENT_DIR,
                 $path,
@@ -101,7 +101,7 @@ final class DCTWPHero_Migration_Import
 
         foreach ($files['delete'] as $path)
         {
-            $destination = DCTWPHero_Migration_Files::destination(WP_CONTENT_DIR, $path);
+            $destination = DCTWPSollers_Migration_Files::destination(WP_CONTENT_DIR, $path);
 
             // Validated mirror target: detect deletion failure, without wp_delete_file() filters changing the path.
             // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
@@ -113,7 +113,7 @@ final class DCTWPHero_Migration_Import
 
         foreach ($files['directories'] as $path)
         {
-            DCTWPHero_Migration_Files::remove_directory(WP_CONTENT_DIR, $path);
+            DCTWPSollers_Migration_Files::remove_directory(WP_CONTENT_DIR, $path);
         }
     }
 }

@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_CDN_Rewriter
+final class DCTWPSollers_CDN_Rewriter
 {
     private array $origins = array();
     private array $extensions;

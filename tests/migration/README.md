@@ -42,7 +42,7 @@ con las salvaguardas de `../support/cleanup.php`, nunca mediante comodines ampli
   NULL, rechazo del bootstrap sin runtime CLI y acceso HTTP con WP_CLI definido.
   `../modules.php` comprueba los callbacks registrados mediante Settings API.
 - `../support/bootstrap.php`, `cleanup.php` y `environment.py`: configuración,
-  ejecución y limpieza compartidas, limitadas a instalaciones `dctwphero-test-*`
+  ejecución y limpieza compartidas, limitadas a instalaciones `dctwpsollers-test-*`
   y prefijos aleatorios `dcttest_<12 hex>_`, fuera de las suites de módulos.
   El entorno activa `WP_CACHE` para ejecutar también el filtro temprano que impide
   cargar `advanced-cache.php` durante la importación aislada.

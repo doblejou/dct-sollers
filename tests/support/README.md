@@ -11,7 +11,7 @@ Código compartido por los runners, sin importar suites de otros módulos:
 ## Salvaguardas
 
 Los temporales se crean con `mkdtemp`, bajo `/tmp/opencode` cuando es escribible y
-en `/tmp` en otro caso. Se reservan carpetas `dctwphero-test-*` con instalaciones
+en `/tmp` en otro caso. Se reservan carpetas `dctwpsollers-test-*` con instalaciones
 `wordpress` o `wordpress-target` y prefijos SQL `dcttest_<12 hex>_`.
 Bootstrap y limpieza PHP comprueban ruta real y prefijo antes de operar. La
 limpieza Python también valida la carpeta antes de borrar; si falla la limpieza

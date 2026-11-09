@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_CDN_Admin
+final class DCTWPSollers_CDN_Admin
 {
     ################################################
     #
@@ -14,7 +14,7 @@ final class DCTWPHero_CDN_Admin
     public static function register(): void
     {
         add_action('admin_init', self::register_settings(...));
-        add_action('admin_post_dctwphero_cdn_check', self::check(...));
+        add_action('admin_post_dctwpsollers_cdn_check', self::check(...));
     }
 
     ################################################
@@ -28,8 +28,8 @@ final class DCTWPHero_CDN_Admin
     {
         $arguments = array();
         $arguments['type'] = 'array';
-        $arguments['sanitize_callback'] = 'DCTWPHero_CDN_Admin::sanitize';
-        register_setting('dctwphero_cdn', 'dctwphero_cdn_settings', $arguments);
+        $arguments['sanitize_callback'] = 'DCTWPSollers_CDN_Admin::sanitize';
+        register_setting('dctwpsollers_cdn', 'dctwpsollers_cdn_settings', $arguments);
     }
 
     ################################################
@@ -41,13 +41,13 @@ final class DCTWPHero_CDN_Admin
     ################################################
     public static function sanitize(mixed $input): array
     {
-        $result = DCTWPHero_CDN_Settings::validate($input);
+        $result = DCTWPSollers_CDN_Settings::validate($input);
 
         if ($result === null)
         {
-            add_settings_error('dctwphero_cdn_settings', 'invalid_cdn', __('Ajustes CDN no válidos. Introduce solo un dominio sin protocolo, puerto ni ruta, extensiones con punto y una entrada por línea. Se conservan los ajustes anteriores.', 'dctwphero'));
+            add_settings_error('dctwpsollers_cdn_settings', 'invalid_cdn', __('Ajustes CDN no válidos. Introduce solo un dominio sin protocolo, puerto ni ruta, extensiones con punto y una entrada por línea. Se conservan los ajustes anteriores.', 'dctwpsollers'));
 
-            return DCTWPHero_CDN_Settings::get();
+            return DCTWPSollers_CDN_Settings::get();
         }
 
         return $result;
@@ -64,13 +64,13 @@ final class DCTWPHero_CDN_Admin
     {
         if (!current_user_can('manage_options'))
         {
-            wp_die(esc_html__('No tienes permisos.', 'dctwphero'), '', 403);
+            wp_die(esc_html__('No tienes permisos.', 'dctwpsollers'), '', 403);
         }
 
-        $settings = DCTWPHero_CDN_Settings::get();
-        $enabled = DCTWPHero::module_enabled('cdn');
+        $settings = DCTWPSollers_CDN_Settings::get();
+        $enabled = DCTWPSollers::module_enabled('cdn');
         $conflict = is_plugin_active('cdn-enabler/cdn-enabler.php');
-        $transient = 'dctwphero_cdn_check_' . get_current_user_id();
+        $transient = 'dctwpsollers_cdn_check_' . get_current_user_id();
         $notice = get_transient($transient);
         delete_transient($transient);
 
@@ -91,7 +91,7 @@ final class DCTWPHero_CDN_Admin
 
         if ($settings['hostname'] === '')
         {
-            $result['message'] = __('Guarda primero un dominio CDN válido.', 'dctwphero');
+            $result['message'] = __('Guarda primero un dominio CDN válido.', 'dctwpsollers');
 
             return $result;
         }
@@ -107,7 +107,7 @@ final class DCTWPHero_CDN_Admin
 
         if (is_wp_error($response))
         {
-            $result['message'] = __('No se pudo comprobar el CDN. Revisa DNS, certificado, accesibilidad y configuración del origen.', 'dctwphero');
+            $result['message'] = __('No se pudo comprobar el CDN. Revisa DNS, certificado, accesibilidad y configuración del origen.', 'dctwpsollers');
 
             return $result;
         }
@@ -116,7 +116,7 @@ final class DCTWPHero_CDN_Admin
         $result['success'] = $status === 200;
         $result['message'] = sprintf(
             /* translators: %d: HTTP status code returned by the CDN. */
-            __('El recurso de prueba del CDN respondió con HTTP %d. Esta comprobación no verifica todos los archivos ni las cabeceras CORS de las fuentes.', 'dctwphero'),
+            __('El recurso de prueba del CDN respondió con HTTP %d. Esta comprobación no verifica todos los archivos ni las cabeceras CORS de las fuentes.', 'dctwpsollers'),
             $status
         );
 
@@ -134,13 +134,13 @@ final class DCTWPHero_CDN_Admin
     {
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !current_user_can('manage_options'))
         {
-            wp_die(esc_html__('No tienes permisos.', 'dctwphero'), '', 403);
+            wp_die(esc_html__('No tienes permisos.', 'dctwpsollers'), '', 403);
         }
 
-        check_admin_referer('dctwphero_cdn_check');
-        $result = self::probe(DCTWPHero_CDN_Settings::get());
-        set_transient('dctwphero_cdn_check_' . get_current_user_id(), $result, MINUTE_IN_SECONDS);
-        wp_safe_redirect(admin_url('options-general.php?page=dctwphero&tab=cdn'));
+        check_admin_referer('dctwpsollers_cdn_check');
+        $result = self::probe(DCTWPSollers_CDN_Settings::get());
+        set_transient('dctwpsollers_cdn_check_' . get_current_user_id(), $result, MINUTE_IN_SECONDS);
+        wp_safe_redirect(admin_url('options-general.php?page=dctwpsollers&tab=cdn'));
         exit;
     }
 }

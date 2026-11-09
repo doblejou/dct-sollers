@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Frontend_Settings
+final class DCTWPSollers_Frontend_Settings
 {
     ################################################
     #
@@ -40,7 +40,7 @@ final class DCTWPHero_Frontend_Settings
     ################################################
     public static function get(): array
     {
-        $saved = get_option('dctwphero_frontend_settings', array());
+        $saved = get_option('dctwpsollers_frontend_settings', array());
 
         return is_array($saved) ? (self::validate(array_replace(self::defaults(), $saved)) ?? self::defaults()) : self::defaults();
     }
@@ -69,7 +69,7 @@ final class DCTWPHero_Frontend_Settings
 
             if (is_int($default))
             {
-                if (!DCTWPHero::valid_module_state($value))
+                if (!DCTWPSollers::valid_module_state($value))
                 {
                     return null;
                 }

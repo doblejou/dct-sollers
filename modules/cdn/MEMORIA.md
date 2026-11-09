@@ -11,23 +11,23 @@ el `APP.md` raíz; contrastar los contratos afectados con el código.
 
 | Archivo | Responsabilidad |
 |---|---|
-| `class-module.php` | `DCTWPHero_CDN_Module`: hooks, alcance, búfer y respuestas REST. |
-| `class-settings.php` | `DCTWPHero_CDN_Settings`: valores iniciales, validación y lectura mediante `defaults()`, `validate()` y `get()`. |
-| `class-rewriter.php` | `DCTWPHero_CDN_Rewriter`: transformación de cadenas con configuración ya validada y orígenes explícitos; sin hooks, opciones ni red. |
-| `class-admin.php` | `DCTWPHero_CDN_Admin`: Settings API, pantalla y comprobación remota explícita. |
+| `class-module.php` | `DCTWPSollers_CDN_Module`: hooks, alcance, búfer y respuestas REST. |
+| `class-settings.php` | `DCTWPSollers_CDN_Settings`: valores iniciales, validación y lectura mediante `defaults()`, `validate()` y `get()`. |
+| `class-rewriter.php` | `DCTWPSollers_CDN_Rewriter`: transformación de cadenas con configuración ya validada y orígenes explícitos; sin hooks, opciones ni red. |
+| `class-admin.php` | `DCTWPSollers_CDN_Admin`: Settings API, pantalla y comprobación remota explícita. |
 | `templates/settings.php` | Formulario y avisos con datos preparados; sin consultas ni lógica de negocio. |
 
-Conexiones desde la raíz: `dctwphero.php` carga clases y declara callbacks en
-`DCTWPHero::modules()`; administración disponible incluso desactivado. El registro
+Conexiones desde la raíz: `dctwpsollers.php` carga clases y declara callbacks en
+`DCTWPSollers::modules()`; administración disponible incluso desactivado. El registro
 general y sus plantillas generan automáticamente activación y pestaña. `uninstall.php`
 elimina la opción. No hay clase de almacenamiento ni tablas nuevas.
 
 ## Persistencia y validación
 
-- Estado: `dctwphero_modules['cdn']`; ausencia equivale a desactivado.
+- Estado: `dctwpsollers_modules['cdn']`; ausencia equivale a desactivado.
   Un estado persistido inválido también queda desactivado mediante la normalización
-  central de `DCTWPHero::module_states()`.
-- Opción `dctwphero_cdn_settings`: `hostname` vacío, `relative` 1, `exclusions`
+  central de `DCTWPSollers::module_states()`.
+- Opción `dctwpsollers_cdn_settings`: `hostname` vacío, `relative` 1, `exclusions`
   vacío y `extensions` con `.avif`, `.css`, `.gif`, `.jpeg`, `.jpg`, `.js`, `.json`,
   `.mp3`, `.mp4`, `.pdf`, `.png`, `.svg`, `.webp`, `.woff` y `.woff2`.
 - Dominio ASCII normalizado a minúsculas, sin protocolo, ruta, puerto, credenciales
@@ -72,12 +72,12 @@ CDN/origen; el aviso no implica configurar o verificar esas cabeceras.
 
 ## Administración y comprobación
 
-- Settings API: grupo `dctwphero_cdn`, opción anterior, `manage_options` y nonce
+- Settings API: grupo `dctwpsollers_cdn`, opción anterior, `manage_options` y nonce
   nativos. Guardar no contacta con servidores externos. Registra `type=array` y
-  callback explícito `DCTWPHero_CDN_Admin::sanitize`; `tests/modules.php` comprueba
+  callback explícito `DCTWPSollers_CDN_Admin::sanitize`; `tests/modules.php` comprueba
   su conexión y ejecución mediante `sanitize_option()`.
-- `admin_post_dctwphero_cdn_check`: solo POST autenticado, `manage_options` y nonce
-  `dctwphero_cdn_check`; no existe handler nopriv. Anónimos reciben el rechazo
+- `admin_post_dctwpsollers_cdn_check`: solo POST autenticado, `manage_options` y nonce
+  `dctwpsollers_cdn_check`; no existe handler nopriv. Anónimos reciben el rechazo
   nativo de WordPress. Resultados en transient por usuario durante un minuto,
   consumido en la pestaña, sin guardar mensajes remotos sin filtrar.
 - `probe()` sustituye la autoridad de `includes_url('images/blank.gif')` y realiza
@@ -94,7 +94,7 @@ CDN/origen; el aviso no implica configurar o verificar esas cabeceras.
 
 ## Pruebas (rutas desde la raíz)
 
-- `wp --path=/var/www/wpdev4.local --skip-plugins=dctwphero eval-file tests/cdn/rewriter.php`:
+- `wp --path=/var/www/wpdev4.local --skip-plugins=dctwpsollers eval-file tests/cdn/rewriter.php`:
   motor con el parser `wp_parse_url()` real de WordPress, formatos, extensiones, fuentes,
   srcset, CSS inline, exclusiones, autoridades/puertos e idempotencia.
   Incluye exclusiones tras entidades HTML, también con barras escapadas.
@@ -107,7 +107,7 @@ CDN/origen; el aviso no implica configurar o verificar esas cabeceras.
   otro host .local que resuelva a 127.0.0.1 (por defecto wpdev4.local).
 - Reutiliza `tests/support/environment.py`, `bootstrap.php` y `cleanup.php`, sin
   importar runners de otros módulos. El nombre temporal reservado es
-  `dctwphero-test-*` para sus validaciones de seguridad. Solo lee núcleo y
+  `dctwpsollers-test-*` para sus validaciones de seguridad. Solo lee núcleo y
   credenciales del sitio de referencia; elimina exclusivamente tablas propias y
   su temporal. Una terminación forzada puede impedir la limpieza.
 - Frontend tiene su entrada propia `tests/frontend/integration.py`, que ejecuta

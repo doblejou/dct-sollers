@@ -13,14 +13,14 @@ Consultar el `APP.md` raíz antes de modificarlo.
 | `class-admin.php` | Registro Settings API, validación del formulario, preparación de campos y avisos. |
 | `templates/settings.php` | Presentación escapada sin consultas ni lógica de negocio. |
 
-`dctwphero.php` carga las clases y declara registro/administración/pestaña. La
+`dctwpsollers.php` carga las clases y declara registro/administración/pestaña. La
 administración general sigue sin lógica del módulo. No hay dependencias directas
 con CDN ni otros módulos; el búfer CDN transforma el HTML que genera WordPress.
 
 ## Persistencia y contratos
 
-- Estado en `dctwphero_modules['frontend']`, valor inicial 0.
-- Opción `dctwphero_frontend_settings`, sin tablas ni cron. Desactivar conserva;
+- Estado en `dctwpsollers_modules['frontend']`, valor inicial 0.
+- Opción `dctwpsollers_frontend_settings`, sin tablas ni cron. Desactivar conserva;
   `uninstall.php` elimina la opción.
 - `emojis`, `rsd`, `shortlinks`, `dashicons`: 0/1 entero o cadena, inicialmente 0.
 - `rest_links`, `oembed_links`, `generator`, `feed_links`,
@@ -36,8 +36,8 @@ con CDN ni otros módulos; el búfer CDN transforma el HTML que genera WordPress
   rechazados. No se verifican MIME, existencia, CORS ni contenido remoto.
 - Formularios completos, sin claves extra; validación inválida conserva la opción
   anterior. Lectura parcial completa valores; corrupción recupera todos los iniciales.
-- Settings API grupo `dctwphero_frontend`, permiso `manage_options`, nonce nativo.
-  Registra `type=array` y callback explícito `DCTWPHero_Frontend_Admin::sanitize`;
+- Settings API grupo `dctwpsollers_frontend`, permiso `manage_options`, nonce nativo.
+  Registra `type=array` y callback explícito `DCTWPSollers_Frontend_Admin::sanitize`;
   `tests/modules.php` verifica su conexión y ejecución vía `sanitize_option()`.
   Pestaña disponible desactivado; avisa si `wpo-tweaks/wpo-tweaks.php` está activo.
 

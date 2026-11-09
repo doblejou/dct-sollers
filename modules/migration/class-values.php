@@ -2,7 +2,7 @@
 
 defined('ABSPATH') || exit;
 
-final class DCTWPHero_Migration_Values
+final class DCTWPSollers_Migration_Values
 {
     ################################################
     #

@@ -13,7 +13,7 @@ WordPress de referencia `/var/www/wpdev4.local`.
 
 ## Mapa de responsabilidades
 
-Clases con prefijo `DCTWPHero_Migration_`:
+Clases con prefijo `DCTWPSollers_Migration_`:
 
 | Archivo | Clase / responsabilidad |
 |---|---|
@@ -32,8 +32,8 @@ Clases con prefijo `DCTWPHero_Migration_`:
 | `verify.php` | Verificación SQL sobre las tablas del sitio. |
 | `class-cache.php`, `flush-cache.php` | `Cache`: invalidación CSS de Elementor activo y limpieza final de objetos. |
 
-Conexiones externas (rutas raíz): `dctwphero.php` carga Module/Admin y declara
-el módulo en `DCTWPHero::modules()`; la infraestructura de administración genera
+Conexiones externas (rutas raíz): `dctwpsollers.php` carga Module/Admin y declara
+el módulo en `DCTWPSollers::modules()`; la infraestructura de administración genera
 su pestaña desde el registro. No introducir dependencias directas con otros módulos.
 Desactivar retira los comandos, no la pestaña informativa ni los datos.
 
@@ -46,10 +46,10 @@ no una comprobación ficticia de `ABSPATH` para complacer el analizador.
 ## Interfaz CLI
 
 ```sh
-wp dctwphero export --file=/ruta/privada/sitio.zip
-wp dctwphero export --file=/ruta/privada/sitio.zip --exclude=uploads/privado --exclude-tables=wp_temporal
-wp dctwphero import --file=/ruta/privada/sitio.zip --mode=merge --dry-run
-wp dctwphero import --file=/ruta/privada/sitio.zip --mode=mirror --yes
+wp dctwpsollers export --file=/ruta/privada/sitio.zip
+wp dctwpsollers export --file=/ruta/privada/sitio.zip --exclude=uploads/privado --exclude-tables=wp_temporal
+wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=merge --dry-run
+wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=mirror --yes
 ```
 
 - `--file`: ruta absoluta; exportación requiere ZIP nuevo y directorio existente,
@@ -143,7 +143,7 @@ superen el timeout ampliado. No modifica GLOBAL wait_timeout.
 
 ## Formato y límites que no deben romperse
 
-- ZIP propio `format=dctwphero`, versión 1; no compatible con `.wpress`, sin Composer.
+- ZIP propio `format=dctwpsollers`, versión 1; no compatible con `.wpress`, sin Composer.
   `manifest.json`: contexto, prefijo, exclusiones, tablas e inventario de entradas
   (tamaño, SHA-256, permisos y fecha). Manifiesto limitado a 64 MiB.
 - Archivos bajo `content/`; un NDJSON bajo `database/` por tabla, con esquema,
@@ -170,7 +170,7 @@ superen el timeout ampliado. No modifica GLOBAL wait_timeout.
   conjunto exportado o el sustituido/eliminado en destino, incluidas otras bases.
   `drop_tables()` permite borrar conjuntos cerrados con ciclos desactivando solo
   en esa sesión las comprobaciones, que restaura en finally.
-- Mantener activo DCT WP Hero al finalizar, respetando estados de módulos
+- Mantener activo DCTWP Sollers al finalizar, respetando estados de módulos
   importados. Restablecer uploads estándar y fijar las URLs individualmente.
 - `Values::replace()` valida gramática serializada y recalcula longitudes sin
   instanciar objetos; conserva referencias. Rechazar estructuras truncadas y `C:`
@@ -189,7 +189,7 @@ superen el timeout ampliado. No modifica GLOBAL wait_timeout.
   Dry-run no garantiza permisos DDL, espacio SQL remoto ni compatibilidad de plugins.
   No borrar por comodín restos `dctm_`/temporales tras una interrupción forzada.
 
-El bootstrap aislado usa `DCTWPHero::initialize_modules()` antes de registrar el
+El bootstrap aislado usa `DCTWPSollers::initialize_modules()` antes de registrar el
 migrador: respeta la inicialización modular común sin registrar ejecución de otros
 módulos. La actualización del almacén de login ya no reside en el coordinador.
 
@@ -229,7 +229,7 @@ discos llenos, ZIP >4 GiB, SIGKILL ni todas las combinaciones de servidor/plugin
 
 Infraestructura de instalación/limpieza en `tests/support/bootstrap.php`,
 `cleanup.php` y `environment.py`; no importar otro runner para reutilizarla.
-Los temporales reservados son `dctwphero-test-*` y las tablas `dcttest_<12 hex>_`.
+Los temporales reservados son `dctwpsollers-test-*` y las tablas `dcttest_<12 hex>_`.
 La regresión incluye `tests/lifecycle.php`; login, CDN y Frontend también tienen
 entradas propias y no necesitan ejecutar migración para preparar su entorno.
 
