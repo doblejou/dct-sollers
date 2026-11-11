@@ -15,8 +15,12 @@ try
     $entry = WP_PLUGIN_DIR . '/dct-sollers/dct-sollers.php';
     $check(is_file($entry) && plugin_basename($entry) === 'dct-sollers/dct-sollers.php', 'La instalación utiliza la carpeta y entrada públicas');
     $check(!file_exists(dirname(__DIR__) . '/dctwpsollers.php'), 'La entrada anterior no se distribuye');
-    $check(WP_CLI::has_command('dct-sollers export') && WP_CLI::has_command('dct-sollers import'), 'CLI registra el nuevo nombre público');
-    $check(!WP_CLI::has_command('dctwpsollers export') && !WP_CLI::has_command('dctwpsollers import'), 'CLI no registra alias del nombre anterior');
+    $command_options = array();
+    $command_options['return'] = 'return_code';
+    $command_options['exit_error'] = false;
+    $check(WP_CLI::runcommand('cli has-command "dct-sollers export" "dct-sollers import"', $command_options) === 0, 'CLI registra el nuevo nombre público');
+    $check(WP_CLI::runcommand('cli has-command "dctwpsollers export"', $command_options) === 1
+        && WP_CLI::runcommand('cli has-command "dctwpsollers import"', $command_options) === 1, 'CLI no registra alias del nombre anterior');
 
     $registrations = array();
     $registrations['dctwpsollers_modules'] = 'DCTWPSollers_Admin';
