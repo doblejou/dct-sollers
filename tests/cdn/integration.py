@@ -20,7 +20,7 @@ def main():
     with web_site(arguments.wp_path, arguments.http_host, project, project / 'tests/cdn/fixture.php') as site:
         wp, request, admin, subscriber, post = site.wp, site.request, site.admin, site.subscriber, site.post
         url = site.url
-        print(wp('--skip-plugins=dctwpsollers', 'eval-file', str(project / 'tests/cdn/rewriter.php')))
+        print(wp('--skip-plugins=dct-sollers', 'eval-file', str(project / 'tests/cdn/rewriter.php')))
         for script in ('modules.php', 'admin-ui.php', 'cdn/settings.php', 'cdn/admin.php'):
             print(wp('eval-file', str(project / 'tests' / script)))
         wp('eval', '$s = DCTWPSollers_CDN_Settings::defaults(); $s["hostname"] = "cdn.example.test"; '

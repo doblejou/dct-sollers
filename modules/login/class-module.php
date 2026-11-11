@@ -16,8 +16,8 @@ final class DCTWPSollers_Login_Module
         if (!DCTWPSollers_Store::upgrade())
         {
             wp_die(
-                esc_html__('No se ha podido actualizar el almacenamiento de DCTWP Sollers. Revisa el registro del servidor antes de reintentar.', 'dctwpsollers'),
-                esc_html__('Actualización pendiente', 'dctwpsollers'),
+                esc_html__('No se ha podido actualizar el almacenamiento de DCT Sollers. Revisa el registro del servidor antes de reintentar.', 'dct-sollers'),
+                esc_html__('Actualización pendiente', 'dct-sollers'),
                 503
             );
         }
@@ -104,15 +104,15 @@ final class DCTWPSollers_Login_Module
 
         if ($ip === '')
         {
-            wp_die(esc_html__('No se puede identificar la dirección del cliente.', 'dctwpsollers'), '', 403);
+            wp_die(esc_html__('No se puede identificar la dirección del cliente.', 'dct-sollers'), '', 403);
         }
 
         if (DCTWPSollers_Store::blocked_until($ip) > time())
         {
             nocache_headers();
             wp_die(
-                esc_html__('Acceso temporalmente bloqueado. Inténtalo más tarde.', 'dctwpsollers'),
-                esc_html__('Acceso denegado', 'dctwpsollers'),
+                esc_html__('Acceso temporalmente bloqueado. Inténtalo más tarde.', 'dct-sollers'),
+                esc_html__('Acceso denegado', 'dct-sollers'),
                 403
             );
         }
@@ -138,7 +138,7 @@ final class DCTWPSollers_Login_Module
 
         if ($ip !== '' && !DCTWPSollers_Store::record_failure($ip, DCTWPSollers_Login_Settings::get()))
         {
-            error_log('DCTWP Sollers: no se ha podido registrar un fallo de autenticación.');
+            error_log('DCT Sollers: no se ha podido registrar un fallo de autenticación.');
         }
     }
 }

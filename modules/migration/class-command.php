@@ -12,7 +12,7 @@ final class DCTWPSollers_Migration_Command
     #
     ################################################
     /**
-     * Exporta el sitio a un ZIP propio de DCTWP Sollers.
+     * Exporta el sitio a un ZIP propio de DCT Sollers.
      *
      * ## OPTIONS
      *
@@ -105,7 +105,7 @@ final class DCTWPSollers_Migration_Command
      * ## OPTIONS
      *
      * --file=<path>
-     * : Ruta absoluta de un ZIP propio de DCTWP Sollers.
+     * : Ruta absoluta de un ZIP propio de DCT Sollers.
      *
      * --mode=<mode>
      * : merge conserva archivos y tablas extra; mirror elimina extras no excluidos.
@@ -279,7 +279,7 @@ final class DCTWPSollers_Migration_Command
     {
         if ($args !== array() || array_diff(array_keys($options), $allowed) !== array())
         {
-            throw new RuntimeException('Argumentos no reconocidos. Consulta wp help dctwpsollers export/import.');
+            throw new RuntimeException('Argumentos no reconocidos. Consulta wp help dct-sollers export/import.');
         }
 
         if (!is_string($options['file'] ?? null) || !str_starts_with($options['file'], '/') || str_contains($options['file'], "\0"))

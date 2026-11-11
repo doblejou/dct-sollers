@@ -17,7 +17,7 @@ el `APP.md` raíz; contrastar los contratos afectados con el código.
 | `class-admin.php` | `DCTWPSollers_CDN_Admin`: Settings API, pantalla y comprobación remota explícita. |
 | `templates/settings.php` | Formulario y avisos con datos preparados; sin consultas ni lógica de negocio. |
 
-Conexiones desde la raíz: `dctwpsollers.php` carga clases y declara callbacks en
+Conexiones desde la raíz: `dct-sollers.php` carga clases y declara callbacks en
 `DCTWPSollers::modules()`; administración disponible incluso desactivado. El registro
 general y sus plantillas generan automáticamente activación y pestaña. `uninstall.php`
 elimina la opción. No hay clase de almacenamiento ni tablas nuevas.
@@ -94,7 +94,7 @@ CDN/origen; el aviso no implica configurar o verificar esas cabeceras.
 
 ## Pruebas (rutas desde la raíz)
 
-- `wp --path=/var/www/wpdev4.local --skip-plugins=dctwpsollers eval-file tests/cdn/rewriter.php`:
+- `wp --path=/var/www/wpdev4.local --skip-plugins=dct-sollers eval-file tests/cdn/rewriter.php`:
   motor con el parser `wp_parse_url()` real de WordPress, formatos, extensiones, fuentes,
   srcset, CSS inline, exclusiones, autoridades/puertos e idempotencia.
   Incluye exclusiones tras entidades HTML, también con barras escapadas.

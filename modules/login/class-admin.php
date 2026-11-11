@@ -45,7 +45,7 @@ final class DCTWPSollers_Login_Admin
 
         if ($result === null)
         {
-            add_settings_error('dctwpsollers_settings', 'invalid_settings', __('Introduce números enteros dentro de los rangos indicados.', 'dctwpsollers'));
+            add_settings_error('dctwpsollers_settings', 'invalid_settings', __('Introduce números enteros dentro de los rangos indicados.', 'dct-sollers'));
 
             return DCTWPSollers_Login_Settings::get();
         }
@@ -64,7 +64,7 @@ final class DCTWPSollers_Login_Admin
     {
         if (!current_user_can('manage_options'))
         {
-            wp_die(esc_html__('No tienes permisos.', 'dctwpsollers'), '', 403);
+            wp_die(esc_html__('No tienes permisos.', 'dct-sollers'), '', 403);
         }
 
         $settings = DCTWPSollers_Login_Settings::get();
@@ -91,14 +91,14 @@ final class DCTWPSollers_Login_Admin
     {
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !current_user_can('manage_options'))
         {
-            wp_die(esc_html__('No tienes permisos.', 'dctwpsollers'), '', 403);
+            wp_die(esc_html__('No tienes permisos.', 'dct-sollers'), '', 403);
         }
 
         $ip = isset($_POST['ip']) && is_string($_POST['ip']) ? wp_unslash($_POST['ip']) : '';
 
         if (!filter_var($ip, FILTER_VALIDATE_IP))
         {
-            wp_die(esc_html__('Dirección IP no válida.', 'dctwpsollers'), '', 400);
+            wp_die(esc_html__('Dirección IP no válida.', 'dct-sollers'), '', 400);
         }
 
         $ip = inet_ntop(inet_pton($ip));
@@ -106,7 +106,7 @@ final class DCTWPSollers_Login_Admin
 
         if (!DCTWPSollers_Store::unlock($ip))
         {
-            wp_die(esc_html__('No se ha podido retirar el bloqueo.', 'dctwpsollers'), '', 500);
+            wp_die(esc_html__('No se ha podido retirar el bloqueo.', 'dct-sollers'), '', 500);
         }
 
         wp_safe_redirect(admin_url('options-general.php?page=dctwpsollers&tab=login&unlocked=1'));

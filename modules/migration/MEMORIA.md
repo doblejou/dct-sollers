@@ -32,7 +32,7 @@ Clases con prefijo `DCTWPSollers_Migration_`:
 | `verify.php` | Verificación SQL sobre las tablas del sitio. |
 | `class-cache.php`, `flush-cache.php` | `Cache`: invalidación CSS de Elementor activo y limpieza final de objetos. |
 
-Conexiones externas (rutas raíz): `dctwpsollers.php` carga Module/Admin y declara
+Conexiones externas (rutas raíz): `dct-sollers.php` carga Module/Admin y declara
 el módulo en `DCTWPSollers::modules()`; la infraestructura de administración genera
 su pestaña desde el registro. No introducir dependencias directas con otros módulos.
 Desactivar retira los comandos, no la pestaña informativa ni los datos.
@@ -45,11 +45,15 @@ no una comprobación ficticia de `ABSPATH` para complacer el analizador.
 
 ## Interfaz CLI
 
+El comando público es `dct-sollers`, sin alias anterior. Se conserva el formato
+interno `dctwpsollers` versión 1 para admitir paquetes de Sollers existentes.
+La entrada del plugin pasa a `dct-sollers.php`, también en bootstrap y finalización.
+
 ```sh
-wp dctwpsollers export --file=/ruta/privada/sitio.zip
-wp dctwpsollers export --file=/ruta/privada/sitio.zip --exclude=uploads/privado --exclude-tables=wp_temporal
-wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=merge --dry-run
-wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=mirror --yes
+wp dct-sollers export --file=/ruta/privada/sitio.zip
+wp dct-sollers export --file=/ruta/privada/sitio.zip --exclude=uploads/privado --exclude-tables=wp_temporal
+wp dct-sollers import --file=/ruta/privada/sitio.zip --mode=merge --dry-run
+wp dct-sollers import --file=/ruta/privada/sitio.zip --mode=mirror --yes
 ```
 
 - `--file`: ruta absoluta; exportación requiere ZIP nuevo y directorio existente,
@@ -174,7 +178,7 @@ superen el timeout ampliado. No modifica GLOBAL wait_timeout.
   conjunto exportado o el sustituido/eliminado en destino, incluidas otras bases.
   `drop_tables()` permite borrar conjuntos cerrados con ciclos desactivando solo
   en esa sesión las comprobaciones, que restaura en finally.
-- Mantener activo DCTWP Sollers al finalizar, respetando estados de módulos
+- Mantener activo DCT Sollers al finalizar, respetando estados de módulos
   importados. Restablecer uploads estándar y fijar las URLs individualmente.
 - `Values::replace()` valida gramática serializada y recalcula longitudes sin
   instanciar objetos; conserva referencias. Rechazar estructuras truncadas y `C:`

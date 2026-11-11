@@ -13,7 +13,7 @@ Consultar el `APP.md` raíz antes de modificarlo.
 | `class-admin.php` | Registro Settings API, validación del formulario, preparación de campos y avisos. |
 | `templates/settings.php` | Presentación escapada sin consultas ni lógica de negocio. |
 
-`dctwpsollers.php` carga las clases y declara registro/administración/pestaña. La
+`dct-sollers.php` carga las clases y declara registro/administración/pestaña. La
 administración general sigue sin lógica del módulo. No hay dependencias directas
 con CDN ni otros módulos; el búfer CDN transforma el HTML que genera WordPress.
 

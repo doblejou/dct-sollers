@@ -15,7 +15,7 @@ final class DCTWPSollers_Migration_Admin
     {
         if (!current_user_can('manage_options'))
         {
-            wp_die(esc_html__('No tienes permisos.', 'dctwpsollers'), '', 403);
+            wp_die(esc_html__('No tienes permisos.', 'dct-sollers'), '', 403);
         }
 
         $enabled = DCTWPSollers::module_enabled('migration');

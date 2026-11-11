@@ -19,7 +19,7 @@ Contrastar en el código los detalles afectados y actualizarla al cambiarlos.
 
 Conexiones externas (rutas desde la raíz):
 
-- `dctwpsollers.php`: carga las clases y declara callbacks en `DCTWPSollers::modules()`.
+- `dct-sollers.php`: carga las clases y declara callbacks en `DCTWPSollers::modules()`.
   `boot()` ejecuta `initialize_modules()` antes de registrar módulos. La administración
   se registra incluso con login desactivado; la protección, solo si está activo.
 - No hay delegados de login en `DCTWPSollers`: usar `DCTWPSollers_Login_Settings::get()`
@@ -106,8 +106,9 @@ Invariantes:
 
 ## Dónde tocar y cómo comprobar
 
-La identidad pública es DCTWP Sollers y el prefijo técnico `dctwpsollers`.
-No hay lectura ni migración de opciones, tablas o cron del plugin anterior.
+La identidad pública es DCT Sollers, con slug y dominio `dct-sollers`.
+El prefijo técnico `dctwpsollers` se conserva para mantener datos de Sollers.
+No hay lectura ni migración de opciones, tablas o cron de DCT WP Hero.
 `tests/modules.php` verifica cabecera, dominio de traducción y tabla propia.
 
 Comandos desde la raíz, **solo en pruebas**: las integraciones modifican datos.

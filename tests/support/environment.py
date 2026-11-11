@@ -61,7 +61,7 @@ def web_site(source, host, project, theme_fixture):
             if file.name != 'wp-config.php':
                 shutil.copy2(file, root / file.name)
         content = root / 'wp-content'
-        shutil.copytree(project, content / 'plugins/dctwpsollers', ignore=shutil.ignore_patterns('.git', '.ai-rules', 'release', '__pycache__'))
+        shutil.copytree(project, content / 'plugins/dct-sollers', ignore=shutil.ignore_patterns('.git', '.ai-rules', 'release', '__pycache__'))
         theme = content / 'themes/web-fixture'
         theme.mkdir(parents=True)
         (theme / 'style.css').write_text('/* Theme Name: Web Fixture */')
@@ -76,7 +76,7 @@ def web_site(source, host, project, theme_fixture):
         password = secrets.token_hex(20)
         wp('core', 'install', '--url=' + url, '--title=Plugin Test', '--admin_user=testadmin',
            '--admin_email=test@example.test', '--admin_password=' + password, '--skip-email')
-        wp('plugin', 'activate', 'dctwpsollers')
+        wp('plugin', 'activate', 'dct-sollers')
         wp('theme', 'activate', 'web-fixture')
         wp('user', 'create', 'testsubscriber', 'subscriber@example.test', '--role=subscriber', '--user_pass=' + password)
         post = wp('post', 'create', '--post_status=publish', '--post_title=Fixture',

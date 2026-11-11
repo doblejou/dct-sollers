@@ -54,7 +54,7 @@ def verify(wp):
 
 def failures(wp, archive, fixture, content, prefix):
     excluded = fixture / 'foreign-excluded.zip'
-    wp('dctwpsollers', 'export', f'--file={excluded}', f'--exclude-tables={prefix}ca_templates', expected=1)
+    wp('dct-sollers', 'export', f'--file={excluded}', f'--exclude-tables={prefix}ca_templates', expected=1)
     assert not excluded.exists()
 
     def missing_parent(manifest, files):
@@ -66,7 +66,7 @@ def failures(wp, archive, fixture, content, prefix):
 
     bad_parent = fixture / 'foreign-missing-parent.zip'
     rewrite_package(archive, bad_parent, missing_parent)
-    wp('dctwpsollers', 'import', f'--file={bad_parent}', '--mode=merge', '--dry-run', expected=1)
+    wp('dct-sollers', 'import', f'--file={bad_parent}', '--mode=merge', '--dry-run', expected=1)
     assert not (content.parent / '.maintenance').exists()
 
     def orphan(manifest, files):
@@ -80,8 +80,8 @@ def failures(wp, archive, fixture, content, prefix):
     rewrite_package(archive, bad, orphan)
     before = wp('db', 'tables', '--all-tables')
     marker = (content / 'uploads/fixture.txt').read_bytes()
-    wp('dctwpsollers', 'import', f'--file={bad}', '--mode=merge', '--dry-run')
-    wp('dctwpsollers', 'import', f'--file={bad}', '--mode=merge', '--yes', expected=1)
+    wp('dct-sollers', 'import', f'--file={bad}', '--mode=merge', '--dry-run')
+    wp('dct-sollers', 'import', f'--file={bad}', '--mode=merge', '--yes', expected=1)
     assert (content.parent / '.maintenance').exists()
     assert before == wp('db', 'tables', '--all-tables'), 'Preparación con relaciones se limpia tras fallo'
     assert marker == (content / 'uploads/fixture.txt').read_bytes()
@@ -93,8 +93,8 @@ def failures(wp, archive, fixture, content, prefix):
     wp('eval', f'DCTWPSollers_Migration_Database::query("CREATE TABLE `{outside}` (id int, FOREIGN KEY(id) REFERENCES `{prefix}ca_templates`(id)) ENGINE=InnoDB");')
     try:
         for mode in ('merge', 'mirror'):
-            wp('dctwpsollers', 'import', f'--file={archive}', f'--mode={mode}', '--dry-run', expected=1)
-        wp('dctwpsollers', 'export', f'--file={fixture}/foreign-outside.zip', expected=1)
+            wp('dct-sollers', 'import', f'--file={archive}', f'--mode={mode}', '--dry-run', expected=1)
+        wp('dct-sollers', 'export', f'--file={fixture}/foreign-outside.zip', expected=1)
         assert not (content.parent / '.maintenance').exists()
     finally:
         wp('eval', f'DCTWPSollers_Migration_Database::query("DROP TABLE `{outside}`");')
@@ -104,8 +104,8 @@ def failures(wp, archive, fixture, content, prefix):
         DCTWPSollers_Migration_Database::query("CREATE TABLE `{$p}extra_fk_b` (id int PRIMARY KEY, parent_id int, FOREIGN KEY(parent_id) REFERENCES `{$p}extra_fk_a`(id)) ENGINE=InnoDB");
         DCTWPSollers_Migration_Database::query("ALTER TABLE `{$p}extra_fk_a` ADD FOREIGN KEY(parent_id) REFERENCES `{$p}extra_fk_b`(id)");
     ''')
-    wp('dctwpsollers', 'import', f'--file={archive}', '--mode=merge', '--dry-run')
-    wp('dctwpsollers', 'import', f'--file={archive}', '--mode=mirror', '--yes')
+    wp('dct-sollers', 'import', f'--file={archive}', '--mode=merge', '--dry-run')
+    wp('dct-sollers', 'import', f'--file={archive}', '--mode=mirror', '--yes')
     assert prefix + 'extra_fk_a' not in wp('db', 'tables', '--all-tables-with-prefix')
     assert prefix + 'extra_fk_b' not in wp('db', 'tables', '--all-tables-with-prefix')
     verify(wp)

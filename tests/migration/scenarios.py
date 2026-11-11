@@ -40,8 +40,8 @@ def arguments(wp, archive, fixture, content):
         ('import', f'--file={archive}', '--mode=merge', '--site-url=https://example.test/#fragment'),
     ]
     for case in cases:
-        wp('dctwpsollers', *case, expected=1)
-    diagnostic = wp('dctwpsollers', 'export', f'--file={fixture}/terminal-control.zip', '--exclude=uploads/\x1b[31m', expected=1)
+        wp('dct-sollers', *case, expected=1)
+    diagnostic = wp('dct-sollers', 'export', f'--file={fixture}/terminal-control.zip', '--exclude=uploads/\x1b[31m', expected=1)
     assert '\x1b' not in diagnostic and '\\x1B' in diagnostic, 'No imprime secuencias de control desde rutas rechazadas'
     assert not (fixture / 'terminal-control.zip').exists(), 'Rechazo previo a publicar el ZIP'
     config = content.parent / 'wp-config.php'
@@ -49,21 +49,21 @@ def arguments(wp, archive, fixture, content):
     for constant, option in (('WP_HOME', 'home-url'), ('WP_SITEURL', 'site-url')):
         config.write_text(original_config.replace("if (!defined('ABSPATH'))", f"define('{constant}', 'http://origin.test');\nif (!defined('ABSPATH'))"))
         try:
-            diagnostic = wp('dctwpsollers', 'import', f'--file={archive}', '--mode=merge', '--dry-run', f'--{option}=https://conflict.test', expected=1)
+            diagnostic = wp('dct-sollers', 'import', f'--file={archive}', '--mode=merge', '--dry-run', f'--{option}=https://conflict.test', expected=1)
             assert f'La URL solicitada entra en conflicto con {constant}.' in diagnostic, 'El diagnóstico CLI identifica la constante en conflicto'
         finally:
             config.write_text(original_config)
     maintenance = content.parent / '.maintenance'
     maintenance.write_text('<?php $upgrading = time(); // existing fixture')
     try:
-        wp('dctwpsollers', 'import', f'--file={archive}', '--mode=merge', '--yes', expected=1)
+        wp('dct-sollers', 'import', f'--file={archive}', '--mode=merge', '--yes', expected=1)
         assert maintenance.read_text().endswith('// existing fixture')
     finally:
         maintenance.unlink()
     link = content / 'uploads' / 'blocked-link'
     link.symlink_to(fixture, target_is_directory=True)
     try:
-        wp('dctwpsollers', 'import', f'--file={archive}', '--mode=mirror', '--dry-run', expected=1)
+        wp('dct-sollers', 'import', f'--file={archive}', '--mode=mirror', '--dry-run', expected=1)
     finally:
         link.unlink()
     print(f'OK: {len(cases)} casos de argumentos inválidos, mantenimiento previo y enlaces de destino.')
@@ -96,10 +96,10 @@ def packages(wp, archive, fixture):
     for index, mutate in enumerate((change_version, missing, unexpected, case_collision, conflict, invalid_header)):
         target = fixture / f'contract-{index}.zip'
         rewrite_package(archive, target, mutate)
-        wp('dctwpsollers', 'import', f'--file={target}', '--mode=mirror', '--dry-run', expected=1)
+        wp('dct-sollers', 'import', f'--file={target}', '--mode=mirror', '--dry-run', expected=1)
     target = fixture / 'not-a-zip.zip'
     target.write_text('not a ZIP archive')
-    wp('dctwpsollers', 'import', f'--file={target}', '--mode=merge', '--dry-run', expected=1)
+    wp('dct-sollers', 'import', f'--file={target}', '--mode=merge', '--dry-run', expected=1)
     print('OK: versiones, entradas ausentes/extra, colisiones de nombre/ruta, cabeceras y ZIP inválidos.')
 
 
@@ -119,7 +119,7 @@ def database_failures(wp, archive, fixture, content):
             continue
         assert outcome == 'created', f'No se creó la condición de prueba: {outcome}'
         try:
-            wp('dctwpsollers', 'import', f'--file={archive}', '--mode=merge', '--dry-run', expected=1)
+            wp('dct-sollers', 'import', f'--file={archive}', '--mode=merge', '--dry-run', expected=1)
         finally:
             wp('eval', 'global $wpdb; $wpdb->query("DROP ' + kind + ' `{$wpdb->prefix}' + name + '`");')
     outcome = wp('eval', 'global $wpdb; $sql = "CREATE TRIGGER `{$wpdb->prefix}fixture_trigger` BEFORE INSERT ON `{$wpdb->prefix}fixture` FOR EACH ROW SET @dct_fixture = 1"; '
@@ -129,7 +129,7 @@ def database_failures(wp, archive, fixture, content):
     else:
         assert outcome == 'created', f'No se creó el trigger de prueba: {outcome}'
         try:
-            wp('dctwpsollers', 'import', f'--file={archive}', '--mode=merge', '--dry-run', expected=1)
+            wp('dct-sollers', 'import', f'--file={archive}', '--mode=merge', '--dry-run', expected=1)
         finally:
             wp('eval', 'global $wpdb; $wpdb->query("DROP TRIGGER `{$wpdb->prefix}fixture_trigger`");')
 
@@ -145,7 +145,7 @@ def database_failures(wp, archive, fixture, content):
     rewrite_package(archive, target, overflow)
     before = wp('db', 'tables', '--all-tables')
     marker = (content / 'uploads/fixture.txt').read_bytes()
-    result = wp('dctwpsollers', 'import', f'--file={target}', '--mode=merge', '--yes', expected=1)
+    result = wp('dct-sollers', 'import', f'--file={target}', '--mode=merge', '--yes', expected=1)
     assert 'mantenimiento' in result
     assert (content / 'uploads/fixture.txt').read_bytes() == marker
     assert wp('db', 'tables', '--all-tables') == before, 'No quedan tablas de preparación'

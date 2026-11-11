@@ -13,7 +13,7 @@ final class DCTWPSollers_Admin
     ################################################
     public static function menu(): void
     {
-        $hook = add_options_page('DCTWP Sollers', 'DCTWP Sollers', 'manage_options', 'dctwpsollers', self::render(...));
+        $hook = add_options_page('DCT Sollers', 'DCT Sollers', 'manage_options', 'dctwpsollers', self::render(...));
         add_action('admin_print_styles-' . $hook, self::enqueue_styles(...));
     }
 
@@ -27,7 +27,7 @@ final class DCTWPSollers_Admin
     public static function enqueue_styles(): void
     {
         $file = dirname(__DIR__) . '/assets/admin.css';
-        wp_enqueue_style('dctwpsollers-admin', plugins_url('assets/admin.css', dirname(__DIR__) . '/dctwpsollers.php'), array(), (string) filemtime($file));
+        wp_enqueue_style('dctwpsollers-admin', plugins_url('assets/admin.css', dirname(__DIR__) . '/dct-sollers.php'), array(), (string) filemtime($file));
     }
 
     ################################################
@@ -71,7 +71,7 @@ final class DCTWPSollers_Admin
 
         if (!$valid || array_diff_key($input, $result) !== array())
         {
-            add_settings_error('dctwpsollers_modules', 'invalid_modules', __('Los estados de los módulos no son válidos.', 'dctwpsollers'));
+            add_settings_error('dctwpsollers_modules', 'invalid_modules', __('Los estados de los módulos no son válidos.', 'dct-sollers'));
 
             return DCTWPSollers::module_states();
         }
@@ -90,7 +90,7 @@ final class DCTWPSollers_Admin
     {
         if (!current_user_can('manage_options'))
         {
-            wp_die(esc_html__('No tienes permisos.', 'dctwpsollers'), '', 403);
+            wp_die(esc_html__('No tienes permisos.', 'dct-sollers'), '', 403);
         }
 
         $modules = DCTWPSollers::modules();
@@ -106,7 +106,7 @@ final class DCTWPSollers_Admin
 
         $headers = array();
         $headers['version'] = 'Version';
-        $plugin_data = get_file_data(dirname(__DIR__) . '/dctwpsollers.php', $headers);
+        $plugin_data = get_file_data(dirname(__DIR__) . '/dct-sollers.php', $headers);
         $version = $plugin_data['version'];
 
         require dirname(__DIR__) . '/templates/admin.php';

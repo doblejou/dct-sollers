@@ -46,16 +46,16 @@ def mirror_scenarios(wp, wp_root, archive, fixture):
     rewrite_package(archive, package, exclusions)
     wp('plugin', 'activate', 'shutdown-probe')
     wp('theme', 'activate', 'shutdown-theme')
-    output = wp('dctwpsollers', 'import', f'--file={package}', '--mode=mirror', '--dry-run')
+    output = wp('dct-sollers', 'import', f'--file={package}', '--mode=mirror', '--dry-run')
     assert 'Directorios extra a eliminar tras vaciarlos:' in output
     assert plugin.exists() and theme.exists() and empty.exists() and mu_file.exists()
     php = wp('eval', 'echo PHP_BINARY;').strip()
     invocation = [php, '-d', 'disable_functions=pcntl_exec', shutil.which('wp'), f'--path={wp_root}', '--allow-root']
-    rejected = subprocess.run(invocation + ['dctwpsollers', 'import', f'--file={package}', '--mode=mirror', '--yes'], capture_output=True, text=True)
+    rejected = subprocess.run(invocation + ['dct-sollers', 'import', f'--file={package}', '--mode=mirror', '--yes'], capture_output=True, text=True)
     assert rejected.returncode == 1 and 'pcntl_exec' in rejected.stderr and '--require' in rejected.stderr
     assert plugin.exists() and theme.exists() and not (wp_root / '.maintenance').exists()
-    bootstrap = wp_root / 'wp-content/plugins/dctwpsollers/modules/migration/import-bootstrap.php'
-    manual = invocation + ['--skip-plugins', '--skip-themes', f'--require={bootstrap}', 'dctwpsollers', 'import', f'--file={package}', '--mode=merge', '--yes']
+    bootstrap = wp_root / 'wp-content/plugins/dct-sollers/modules/migration/import-bootstrap.php'
+    manual = invocation + ['--skip-plugins', '--skip-themes', f'--require={bootstrap}', 'dct-sollers', 'import', f'--file={package}', '--mode=merge', '--yes']
     result = subprocess.run(manual, capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
     assert plugin.exists() and theme.exists() and empty.exists() and mu_file.exists(), 'merge conserva extras'
@@ -63,7 +63,7 @@ def mirror_scenarios(wp, wp_root, archive, fixture):
     wp('theme', 'activate', 'shutdown-theme')
     for path in (marker, theme_marker, mu_marker):
         path.unlink(missing_ok=True)
-    output = wp('dctwpsollers', 'import', f'--file={package}', '--mode=mirror', '--yes')
+    output = wp('dct-sollers', 'import', f'--file={package}', '--mode=mirror', '--yes')
     assert 'Fatal error' not in output
     assert not plugin.exists() and not theme.exists() and not empty.parents[1].exists()
     assert not mu_file.exists() and not (mu_file.parent / 'dct-late.inc').exists()
@@ -72,6 +72,6 @@ def mirror_scenarios(wp, wp_root, archive, fixture):
     assert not (protected.parent.parent / 'remove-me').exists()
     for name in ('plugins', 'themes', 'uploads', 'mu-plugins'):
         assert (content / name).is_dir(), 'Conserva las raíces estructurales de WordPress'
-    output = wp('dctwpsollers', 'import', f'--file={package}', '--mode=mirror', '--yes')
+    output = wp('dct-sollers', 'import', f'--file={package}', '--mode=mirror', '--yes')
     assert 'Archivos extra a eliminar: 0' in output and 'Directorios extra a eliminar tras vaciarlos: 0' in output
     print('OK: mirror borra carpetas completas y vacías, preserva exclusiones, es idempotente, evita cierres antiguos y ofrece arranque explícito sin pcntl_exec.')
