@@ -4,7 +4,7 @@ Tags: security, login, migration, cdn
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.4
-Stable tag: 0.2.17
+Stable tag: 0.2.18
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -86,6 +86,10 @@ No. Protection is IP-based and limited to wp-login.php. It does not replace serv
 No. The migration tab only displays instructions; exporting and importing require WP-CLI.
 
 == Changelog ==
+
+= 0.2.18 =
+
+* Package DCT Sollers for WordPress.org review with the dct-sollers public identity.
 
 = 0.2.17 =
 

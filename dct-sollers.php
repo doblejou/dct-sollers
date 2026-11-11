@@ -3,7 +3,7 @@
  * Plugin Name: DCT Sollers
  * Description: Herramientas modulares para WordPress con protección de login configurable.
  * Author: Jose Gonzalez - Daycom Technologies
- * Version: 0.2.17
+ * Version: 0.2.18
  * Requires at least: 7.0
  * Requires PHP: 8.4
  * License: GPL-2.0-or-later
