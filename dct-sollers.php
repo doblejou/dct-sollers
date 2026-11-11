@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: DCTWP Sollers
+ * Plugin Name: DCT Sollers
  * Description: Herramientas modulares para WordPress con protección de login configurable.
  * Author: Jose Gonzalez - Daycom Technologies
- * Version: 0.2.16
+ * Version: 0.2.17
  * Requires at least: 7.0
  * Requires PHP: 8.4
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: dctwpsollers
+ * Text Domain: dct-sollers
  */
 
 defined('ABSPATH') || exit;
@@ -35,8 +35,8 @@ final class DCTWPSollers
     public static function modules(): array
     {
         $login = array();
-        $login['label'] = __('Protección de login', 'dctwpsollers');
-        $login['description'] = __('Limita los fallos por IP y bloquea temporalmente el acceso a wp-login.php.', 'dctwpsollers');
+        $login['label'] = __('Protección de login', 'dct-sollers');
+        $login['description'] = __('Limita los fallos por IP y bloquea temporalmente el acceso a wp-login.php.', 'dct-sollers');
         $login['default'] = true;
         $login['register'] = DCTWPSollers_Login_Module::register(...);
         $login['admin_register'] = DCTWPSollers_Login_Admin::register(...);
@@ -44,15 +44,15 @@ final class DCTWPSollers
         $modules = array();
         $modules['login'] = $login;
         $migration = array();
-        $migration['label'] = __('Migración CLI', 'dctwpsollers');
-        $migration['description'] = __('Exporta e importa el sitio exclusivamente mediante WP-CLI.', 'dctwpsollers');
+        $migration['label'] = __('Migración CLI', 'dct-sollers');
+        $migration['description'] = __('Exporta e importa el sitio exclusivamente mediante WP-CLI.', 'dct-sollers');
         $migration['default'] = true;
         $migration['register'] = DCTWPSollers_Migration_Module::register(...);
         $migration['render'] = DCTWPSollers_Migration_Admin::render(...);
         $modules['migration'] = $migration;
         $cdn = array();
-        $cdn['label'] = __('CDN', 'dctwpsollers');
-        $cdn['description'] = __('Sirve recursos estáticos desde un dominio CDN mediante la reescritura de URL.', 'dctwpsollers');
+        $cdn['label'] = __('CDN', 'dct-sollers');
+        $cdn['description'] = __('Sirve recursos estáticos desde un dominio CDN mediante la reescritura de URL.', 'dct-sollers');
         $cdn['default'] = false;
         $cdn['register'] = DCTWPSollers_CDN_Module::register(...);
         $cdn['admin_register'] = DCTWPSollers_CDN_Admin::register(...);
@@ -145,8 +145,8 @@ final class DCTWPSollers
         if (!DCTWPSollers_Store::upgrade())
         {
             wp_die(
-                esc_html__('No se ha podido actualizar el almacenamiento de DCTWP Sollers. Revisa el registro del servidor antes de reintentar.', 'dctwpsollers'),
-                esc_html__('Actualización pendiente', 'dctwpsollers'),
+                esc_html__('No se ha podido actualizar el almacenamiento de DCT Sollers. Revisa el registro del servidor antes de reintentar.', 'dct-sollers'),
+                esc_html__('Actualización pendiente', 'dct-sollers'),
                 503
             );
         }
@@ -187,7 +187,7 @@ final class DCTWPSollers
     {
         if (is_multisite())
         {
-            wp_die(esc_html__('DCTWP Sollers requiere una instalación individual de WordPress.', 'dctwpsollers'));
+            wp_die(esc_html__('DCT Sollers requiere una instalación individual de WordPress.', 'dct-sollers'));
         }
 
         self::maybe_upgrade();

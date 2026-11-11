@@ -18,12 +18,12 @@ WP_CLI::add_wp_hook('enable_loading_advanced_cache_dropin', static fn(): bool =>
 
 WP_CLI::add_hook('after_wp_load', static function (): void
 {
-    require_once dirname(__DIR__, 2) . '/dctwpsollers.php';
-    $self = plugin_basename(dirname(__DIR__, 2) . '/dctwpsollers.php');
+    require_once dirname(__DIR__, 2) . '/dct-sollers.php';
+    $self = plugin_basename(dirname(__DIR__, 2) . '/dct-sollers.php');
 
     if (!in_array($self, get_option('active_plugins', array()), true) || !DCTWPSollers::module_enabled('migration'))
     {
-        WP_CLI::error('El plugin DCTWP Sollers y su módulo de migración deben estar activos.');
+        WP_CLI::error('El plugin DCT Sollers y su módulo de migración deben estar activos.');
     }
 
     DCTWPSollers::maybe_upgrade();

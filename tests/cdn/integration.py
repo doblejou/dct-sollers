@@ -51,7 +51,7 @@ def main():
             if file.name != 'wp-config.php':
                 shutil.copy2(file, root / file.name)
         content = root / 'wp-content'
-        shutil.copytree(project, content / 'plugins/dctwpsollers', ignore=shutil.ignore_patterns('.ai-rules', 'release', '__pycache__'))
+        shutil.copytree(project, content / 'plugins/dct-sollers', ignore=shutil.ignore_patterns('.ai-rules', 'release', '__pycache__'))
         theme = content / 'themes/cdn-fixture'
         theme.mkdir(parents=True)
         (theme / 'style.css').write_text('/* Theme Name: CDN Fixture */')
@@ -66,7 +66,7 @@ def main():
         password = secrets.token_hex(20)
         wp('core', 'install', '--url=' + url, '--title=CDN Test', '--admin_user=cdnadmin',
            '--admin_email=test@example.test', '--admin_password=' + password, '--skip-email')
-        wp('plugin', 'activate', 'dctwpsollers')
+        wp('plugin', 'activate', 'dct-sollers')
         wp('theme', 'activate', 'cdn-fixture')
         for script in ('modules.php', 'cdn/settings.php', 'cdn/admin.php'):
             print(wp('eval-file', str(project / 'tests' / script)))

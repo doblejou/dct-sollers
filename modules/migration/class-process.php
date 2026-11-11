@@ -28,7 +28,7 @@ final class DCTWPSollers_Migration_Process
             '--skip-themes',
             '--skip-packages',
             '--require=' . __DIR__ . '/import-bootstrap.php',
-            'dctwpsollers',
+            'dct-sollers',
             'import',
 
         );

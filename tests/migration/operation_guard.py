@@ -7,14 +7,14 @@ from pathlib import Path
 
 def scenarios(wp, wp_root, archive, fixture):
     fault = Path(__file__).with_name('operation-loss.php')
-    bootstrap = wp_root / 'wp-content/plugins/dctwpsollers/modules/migration/import-bootstrap.php'
+    bootstrap = wp_root / 'wp-content/plugins/dct-sollers/modules/migration/import-bootstrap.php'
     name = 'DCTWPSOLLERS_TEST_LOSS_AT'
     original = os.environ.get(name)
     try:
         for phase in (2, 4):
             os.environ[name] = str(phase)
             output = fixture / f'lost-lock-{phase}.zip'
-            result = wp(f'--require={fault}', 'dctwpsollers', 'export', f'--file={output}', expected=1)
+            result = wp(f'--require={fault}', 'dct-sollers', 'export', f'--file={output}', expected=1)
             assert 'Se ha perdido la conexión SQL original o el bloqueo' in result
             if phase == 2:
                 assert not output.exists(), 'No publica ZIP al perder el bloqueo durante el empaquetado'
@@ -27,7 +27,7 @@ def scenarios(wp, wp_root, archive, fixture):
         for phase in (2, 4):
             os.environ[name] = str(phase)
             result = wp('--skip-plugins', '--skip-themes', f'--require={bootstrap}', f'--require={fault}',
-                        'dctwpsollers', 'import', f'--file={archive}', '--mode=merge', '--yes', expected=1)
+                        'dct-sollers', 'import', f'--file={archive}', '--mode=merge', '--yes', expected=1)
             assert 'Se ha perdido la conexión SQL original o el bloqueo' in result
             assert wp('option', 'get', 'migration_lock_guard').strip() == 'unchanged', 'No publica las tablas preparadas'
             assert before == wp('db', 'tables', '--all-tables'), 'Limpia sus tablas temporales'

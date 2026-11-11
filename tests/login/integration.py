@@ -127,7 +127,7 @@ def main():
         check('dctwpsollers_modules[migration]' in body and 'tab=migration' in body,
               'Migración tiene activación y pestaña informativa propia')
         status, migration_body = request(migration_path, cookies=admin_cookie)
-        check(status == 200 and 'wp dctwpsollers export' in migration_body
+        check(status == 200 and 'wp dct-sollers export' in migration_body
               and '--mode=merge --dry-run' in migration_body and '--mode=mirror' in migration_body,
               'Pestaña de migración muestra ejemplos de exportación, validación e importación')
         usage = re.search(r'<section id="dctwpsollers-migration-usage"[^>]*>(.*?)</section>', migration_body, re.S)
@@ -140,12 +140,12 @@ def main():
             wp('$m = get_option("dctwpsollers_modules", array()); $m["migration"] = 0; update_option("dctwpsollers_modules", $m);')
             status, disabled_examples = request(migration_path, cookies=admin_cookie)
             check(status == 200 and 'El módulo está desactivado' in disabled_examples
-                  and 'wp dctwpsollers export' in disabled_examples,
+                  and 'wp dct-sollers export' in disabled_examples,
                   'Ejemplos disponibles con aviso cuando migración está desactivada')
         finally:
             wp('update_option("dctwpsollers_modules", json_decode(' + json.dumps(previous_modules) + ', true));')
         version = wp('$headers = array(); $headers["version"] = "Version"; '
-                     '$data = get_file_data(WP_PLUGIN_DIR . "/dctwpsollers/dctwpsollers.php", $headers); '
+                     '$data = get_file_data(WP_PLUGIN_DIR . "/dct-sollers/dct-sollers.php", $headers); '
                      'echo $data["version"];')
         check('Versión ' + version in body, 'Ajustes muestra la versión instalada del plugin')
         check(request(admin_path, cookies=subscriber_cookie)[0] == 403,

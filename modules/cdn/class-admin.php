@@ -45,7 +45,7 @@ final class DCTWPSollers_CDN_Admin
 
         if ($result === null)
         {
-            add_settings_error('dctwpsollers_cdn_settings', 'invalid_cdn', __('Ajustes CDN no válidos. Introduce solo un dominio sin protocolo, puerto ni ruta, extensiones con punto y una entrada por línea. Se conservan los ajustes anteriores.', 'dctwpsollers'));
+            add_settings_error('dctwpsollers_cdn_settings', 'invalid_cdn', __('Ajustes CDN no válidos. Introduce solo un dominio sin protocolo, puerto ni ruta, extensiones con punto y una entrada por línea. Se conservan los ajustes anteriores.', 'dct-sollers'));
 
             return DCTWPSollers_CDN_Module::settings();
         }
@@ -64,7 +64,7 @@ final class DCTWPSollers_CDN_Admin
     {
         if (!current_user_can('manage_options'))
         {
-            wp_die(esc_html__('No tienes permisos.', 'dctwpsollers'), '', 403);
+            wp_die(esc_html__('No tienes permisos.', 'dct-sollers'), '', 403);
         }
 
         $settings = DCTWPSollers_CDN_Module::settings();
@@ -91,7 +91,7 @@ final class DCTWPSollers_CDN_Admin
 
         if ($settings['hostname'] === '')
         {
-            $result['message'] = __('Guarda primero un dominio CDN válido.', 'dctwpsollers');
+            $result['message'] = __('Guarda primero un dominio CDN válido.', 'dct-sollers');
 
             return $result;
         }
@@ -107,7 +107,7 @@ final class DCTWPSollers_CDN_Admin
 
         if (is_wp_error($response))
         {
-            $result['message'] = __('No se pudo comprobar el CDN. Revisa DNS, certificado, accesibilidad y configuración del origen.', 'dctwpsollers');
+            $result['message'] = __('No se pudo comprobar el CDN. Revisa DNS, certificado, accesibilidad y configuración del origen.', 'dct-sollers');
 
             return $result;
         }
@@ -116,7 +116,7 @@ final class DCTWPSollers_CDN_Admin
         $result['success'] = $status === 200;
         $result['message'] = sprintf(
             /* translators: %d: HTTP status code returned by the CDN. */
-            __('El recurso de prueba del CDN respondió con HTTP %d. Esta comprobación no verifica todos los archivos ni las cabeceras CORS de las fuentes.', 'dctwpsollers'),
+            __('El recurso de prueba del CDN respondió con HTTP %d. Esta comprobación no verifica todos los archivos ni las cabeceras CORS de las fuentes.', 'dct-sollers'),
             $status
         );
 
@@ -134,7 +134,7 @@ final class DCTWPSollers_CDN_Admin
     {
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !current_user_can('manage_options'))
         {
-            wp_die(esc_html__('No tienes permisos.', 'dctwpsollers'), '', 403);
+            wp_die(esc_html__('No tienes permisos.', 'dct-sollers'), '', 403);
         }
 
         check_admin_referer('dctwpsollers_cdn_check');

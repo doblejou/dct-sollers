@@ -8,10 +8,15 @@ $check = DCTWPSollers_Checks::that(...);
 
 try
 {
-    $identity = get_plugin_data(dirname(__DIR__) . '/dctwpsollers.php', false, false);
-    $check($identity['Name'] === 'DCTWP Sollers', 'La cabecera declara la nueva identidad pública');
-    $check($identity['TextDomain'] === 'dctwpsollers', 'El dominio de traducción coincide con el slug');
-    $check(DCTWPSollers_Store::table() === $GLOBALS['wpdb']->prefix . 'dctwpsollers_ips', 'El almacén utiliza la tabla de la nueva identidad');
+    $identity = get_plugin_data(dirname(__DIR__) . '/dct-sollers.php', false, false);
+    $check($identity['Name'] === 'DCT Sollers', 'La cabecera declara la nueva identidad pública');
+    $check($identity['TextDomain'] === 'dct-sollers', 'El dominio de traducción coincide con el slug');
+    $check(DCTWPSollers_Store::table() === $GLOBALS['wpdb']->prefix . 'dctwpsollers_ips', 'El renombrado conserva la tabla de Sollers');
+    $entry = WP_PLUGIN_DIR . '/dct-sollers/dct-sollers.php';
+    $check(is_file($entry) && plugin_basename($entry) === 'dct-sollers/dct-sollers.php', 'La instalación utiliza la carpeta y entrada públicas');
+    $check(!file_exists(dirname(__DIR__) . '/dctwpsollers.php'), 'La entrada anterior no se distribuye');
+    $check(WP_CLI::has_command('dct-sollers export') && WP_CLI::has_command('dct-sollers import'), 'CLI registra el nuevo nombre público');
+    $check(!WP_CLI::has_command('dctwpsollers export') && !WP_CLI::has_command('dctwpsollers import'), 'CLI no registra alias del nombre anterior');
 
     $registrations = array();
     $registrations['dctwpsollers_modules'] = 'DCTWPSollers_Admin';

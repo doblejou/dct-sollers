@@ -28,7 +28,7 @@ final class DCTWPSollers_Store
 
         if ((int) $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 10)', $lock)) !== 1)
         {
-            error_log('DCTWP Sollers: no se ha podido obtener el bloqueo de migración.');
+            error_log('DCT Sollers: no se ha podido obtener el bloqueo de migración.');
             return false;
         }
 
@@ -40,7 +40,7 @@ final class DCTWPSollers_Store
 
             if ($version > self::DB_VERSION)
             {
-                error_log('DCTWP Sollers: el esquema es más reciente que el código; no se admite downgrade.');
+                error_log('DCT Sollers: el esquema es más reciente que el código; no se admite downgrade.');
                 return false;
             }
 
@@ -60,13 +60,13 @@ final class DCTWPSollers_Store
 
                 if (!$success)
                 {
-                    error_log('DCTWP Sollers: ha fallado la migración de esquema ' . $next . '.');
+                    error_log('DCT Sollers: ha fallado la migración de esquema ' . $next . '.');
                     return false;
                 }
 
                 if (!update_option('dctwpsollers_db_version', $next, false))
                 {
-                    error_log('DCTWP Sollers: no se ha podido guardar la versión del esquema.');
+                    error_log('DCT Sollers: no se ha podido guardar la versión del esquema.');
                     return false;
                 }
 

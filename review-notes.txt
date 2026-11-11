@@ -1,4 +1,4 @@
-DCTWP Sollers - WordPress.org review notes
+DCT Sollers - WordPress.org review notes
 ======================================
 
 This document describes intentional implementation choices, not an approval by
@@ -128,7 +128,12 @@ silenced. These explanations apply to the current callers, not future code:
 * NonPrefixedVariableFound: finalize.php and verify.php are guarded CLI eval-file
   scripts. Their locals belong to WP-CLI's evaluation scope, not plugin globals
   exported during a normal WordPress HTTP bootstrap.
-* trademarked_term: WP may produce an automated naming warning. DCTWP Sollers
+* trademarked_term: WP may produce an automated naming warning. DCT Sollers
   does not claim affiliation with WordPress or Sollers Consulting and includes
   no WordPress logo. The chosen name and slug still require directory review;
   this note is not trademark clearance or approval.
+DCT Sollers uses dct-sollers as its public slug, installation directory,
+main filename and text domain. The WP-CLI namespace is wp dct-sollers.
+Internal DCTWPSollers/dctwpsollers class, storage and archive identifiers are
+retained to preserve existing Sollers data; they are not the display name or
+directory permalink. WordPress.org must assign the requested permalink separately.

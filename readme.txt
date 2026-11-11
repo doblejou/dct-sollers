@@ -1,10 +1,10 @@
-=== DCTWP Sollers ===
+=== DCT Sollers ===
 Contributors: doblejou
 Tags: security, login, migration, cdn
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.4
-Stable tag: 0.2.16
+Stable tag: 0.2.17
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Modular tools for IP-based login protection, WP-CLI site migration, and static r
 
 == Description ==
 
-DCTWP Sollers provides independent modules configured under Settings → DCTWP Sollers. It uses WordPress APIs without mandatory commercial services or external PHP libraries.
+DCT Sollers provides independent modules configured under Settings → DCT Sollers. It uses WordPress APIs without mandatory commercial services or external PHP libraries.
 
 * Login protection: limits failed attempts per IP and temporarily blocks all access to wp-login.php. Enabled by default.
 * CLI migration: exports and imports sites using its own ZIP format, exclusively through WP-CLI. Enabled by default.
@@ -32,10 +32,10 @@ The IP address comes exclusively from REMOTE_ADDR. When using a proxy or CDN, co
 
 Examples:
 
-    wp dctwpsollers export --file=/ruta/privada/sitio.zip
-    wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=merge --dry-run
-    wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=merge
-    wp dctwpsollers import --file=/ruta/privada/sitio.zip --mode=mirror --yes
+    wp dct-sollers export --file=/ruta/privada/sitio.zip
+    wp dct-sollers import --file=/ruta/privada/sitio.zip --mode=merge --dry-run
+    wp dct-sollers import --file=/ruta/privada/sitio.zip --mode=merge
+    wp dct-sollers import --file=/ruta/privada/sitio.zip --mode=mirror --yes
 
 Importing overwrites data, users, and code. It does not create a backup or guarantee rollback. Make an independent backup before importing and only use trusted packages. Packages contain unencrypted sensitive data: store them outside public directories with restricted access.
 
@@ -53,13 +53,18 @@ Saving settings makes no external requests. The Check CDN button explicitly send
 
 == Installation ==
 
-This is an independent plugin identity. Uninstall the previous plugin before
-installing DCTWP Sollers. Previous settings, login blocks and migration archives
-are not imported or supported through compatibility aliases.
+This plugin is independent of DCT WP Hero and does not import its data or archives.
 
-1. Upload the dctwpsollers folder to wp-content/plugins/ or install the ZIP through Plugins → Add Plugin → Upload Plugin.
-2. Activate DCTWP Sollers.
-3. Open Settings → DCTWP Sollers and configure the modules you need.
+When switching from DCTWP Sollers, back up the site, deactivate that plugin,
+replace its directory with dct-sollers/ and activate DCT Sollers. Remove the old
+directory manually without running WordPress uninstall: both names share internal
+classes, settings, storage and scheduled cleanup. Do not keep both copies installed.
+Existing Sollers settings, blocks and migration archives are preserved. Use
+wp dct-sollers for CLI operations; the old command is not registered.
+
+1. Upload the dct-sollers folder to wp-content/plugins/ or install the ZIP through Plugins → Add Plugin → Upload Plugin.
+2. Activate DCT Sollers.
+3. Open Settings → DCT Sollers and configure the modules you need.
 4. Before enabling CDN rewriting, configure its hostname and verify the service and CORS.
 
 To update, replace the plugin files without uninstalling. Deactivation preserves data; uninstalling removes the IP table, plugin settings, and scheduled cleanup event. Export files created outside the plugin are not deleted on uninstall.
@@ -68,7 +73,7 @@ To update, replace the plugin files without uninstalling. Deactivation preserves
 
 = How can I unblock an administrator? =
 
-From another IP address, use Settings → DCTWP Sollers → Login protection. Alternatively, use WP-CLI:
+From another IP address, use Settings → DCT Sollers → Login protection. Alternatively, use WP-CLI:
 
     wp eval 'DCTWPSollers_Store::unlock("192.0.2.10");'
 
@@ -81,6 +86,10 @@ No. Protection is IP-based and limited to wp-login.php. It does not replace serv
 No. The migration tab only displays instructions; exporting and importing require WP-CLI.
 
 == Changelog ==
+
+= 0.2.17 =
+
+* Rename the public plugin identity, installation directory, text domain and CLI command to DCT Sollers / dct-sollers, preserving internal data identifiers and archive format.
 
 = 0.2.16 =
 

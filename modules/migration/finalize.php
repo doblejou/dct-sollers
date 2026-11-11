@@ -25,7 +25,7 @@ if (!is_array($dctwpsollers_plugins))
     throw new RuntimeException('La lista de plugins activos importada no es válida.');
 }
 
-$dctwpsollers_self = plugin_basename(dirname(__DIR__, 2) . '/dctwpsollers.php');
+$dctwpsollers_self = plugin_basename(dirname(__DIR__, 2) . '/dct-sollers.php');
 
 if (!in_array($dctwpsollers_self, $dctwpsollers_plugins, true))
 {
